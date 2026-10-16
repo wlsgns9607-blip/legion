@@ -356,6 +356,69 @@
       }
     }
 
+    // 로컬스토리지 하이브리드 영구 백업 시스템 (Vercel 서버리스 초기화 완벽 방어)
+    const STORAGE_KEY_ACCOUNTS = 'legion_hybrid_accounts_v1';
+    const STORAGE_KEY_ACTIVE = 'legion_active_user_v1';
+
+    function getLocalAccounts() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_ACCOUNTS) || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveLocalAccount(user, rawPassword = null) {
+      if (!user || !user.username) return;
+      const accounts = getLocalAccounts();
+      const existing = accounts[user.username] || {};
+      accounts[user.username] = {
+        ...existing,
+        ...user,
+        password: rawPassword || existing.password || '',
+        updatedAt: Date.now()
+      };
+      localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+      localStorage.setItem(STORAGE_KEY_ACTIVE, user.username);
+    }
+
+    // 서버가 리셋되었을 때 로컬 계정을 서버 DB에 자동 복구 (Self-heal)
+    async function selfHealServerAccount(localAcc) {
+      if (!localAcc || !localAcc.username || !localAcc.password) return;
+      try {
+        // 1. 서버에 계정 재등록 시도
+        await fetch(`${API_URL}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: localAcc.username,
+            password: localAcc.password,
+            name: localAcc.name || localAcc.username,
+            nickname: localAcc.nickname || localAcc.username
+          })
+        });
+        // 2. 최신 게임 진행 데이터 복원 저장
+        await fetch(`${API_URL}/api/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: localAcc.username,
+            level: localAcc.level || 1,
+            exp: localAcc.exp || 0,
+            hp: localAcc.hp || 100,
+            mp: localAcc.mp || 80,
+            job_tier: localAcc.job_tier || 1,
+            kills: localAcc.kills || 0,
+            quest_status: localAcc.quest_status || 'NOT_STARTED',
+            quest_kills: localAcc.quest_kills || 0
+          })
+        });
+        console.log(`[Self-Heal] Vercel 서버 DB에 [${localAcc.username}] 계정 복원 완료`);
+      } catch (err) {
+        console.warn('[Self-Heal] 백그라운드 복원 건너뜀 (오프라인 모드)');
+      }
+    }
+
     // 회원가입 요청
     async function handleRegister(e) {
       e.preventDefault();
@@ -370,6 +433,20 @@
       msg.innerText = '회원가입 처리 중...';
       btn.disabled = true;
 
+      const localUserData = {
+        username,
+        name,
+        nickname,
+        level: 1,
+        exp: 0,
+        hp: 100,
+        mp: 80,
+        job_tier: 1,
+        kills: 0,
+        quest_status: 'NOT_STARTED',
+        quest_kills: 0
+      };
+
       try {
         const res = await fetch(`${API_URL}/api/register`, {
           method: 'POST',
@@ -379,18 +456,34 @@
         const data = await res.json();
 
         if (res.ok) {
+          // 서버 및 로컬스토리지 동시 영구 저장
+          saveLocalAccount(data.user || localUserData, password);
           msg.className = 'auth-msg success';
           msg.innerText = `회원가입 완료! [${nickname}]님 환영합니다. 로그인 중...`;
           setTimeout(() => {
-            applyUserSession(data.user);
+            applyUserSession(data.user || localUserData);
           }, 600);
+          return;
         } else {
-          msg.className = 'auth-msg error';
-          msg.innerText = data.detail || '회원가입에 실패했습니다.';
+          // 서버 에러인 경우 중복 계정인지 체크
+          if (data.detail && data.detail.includes('이미 존재하는')) {
+            msg.className = 'auth-msg error';
+            msg.innerText = data.detail;
+            return;
+          }
+          // 기타 Vercel 서버리스 일시 장애 시 로컬스토리지 백업으로 진행 허용
+          saveLocalAccount(localUserData, password);
+          msg.className = 'auth-msg success';
+          msg.innerText = `회원가입 완료 (로컬 영구 백업 보관)! [${nickname}]님 환영합니다.`;
+          setTimeout(() => applyUserSession(localUserData), 600);
+          return;
         }
       } catch (err) {
-        msg.className = 'auth-msg error';
-        msg.innerText = isLocal ? '파이썬 서버(127.0.0.1:8000)와 통신할 수 없습니다.' : '서버와 통신할 수 없습니다.';
+        // 서버 오프라인이어도 브라우저 로컬스토리지로 가입 및 영구 보존 지원
+        saveLocalAccount(localUserData, password);
+        msg.className = 'auth-msg success';
+        msg.innerText = `회원가입 완료 (영구 로컬 백업 모드)! [${nickname}]님 환영합니다.`;
+        setTimeout(() => applyUserSession(localUserData), 600);
       } finally {
         btn.disabled = false;
       }
@@ -408,6 +501,9 @@
       msg.innerText = '로그인 확인 중...';
       btn.disabled = true;
 
+      const accounts = getLocalAccounts();
+      const localAcc = accounts[username];
+
       try {
         const res = await fetch(`${API_URL}/api/login`, {
           method: 'POST',
@@ -417,18 +513,36 @@
         const data = await res.json();
 
         if (res.ok) {
+          saveLocalAccount(data.user, password);
           msg.className = 'auth-msg success';
           msg.innerText = `로그인 성공! ${data.user.nickname}님의 데이터를 불러옵니다...`;
           setTimeout(() => {
             applyUserSession(data.user);
           }, 500);
+          return;
         } else {
+          // 서버에 계정이 없거나(Vercel 서버리스 재부팅으로 DB 파일 초기화된 경우)
+          if (localAcc && localAcc.password === password) {
+            msg.className = 'auth-msg success';
+            msg.innerText = `브라우저 안전 백업 데이터로부터 [${localAcc.nickname}] 계정을 자동 복구합니다!`;
+            // Vercel 서버 DB에 자동 복구 전송
+            selfHealServerAccount(localAcc);
+            setTimeout(() => applyUserSession(localAcc), 600);
+            return;
+          }
           msg.className = 'auth-msg error';
           msg.innerText = data.detail || '아이디 또는 비밀번호가 틀렸습니다.';
         }
       } catch (err) {
+        // 서버 연결 실패 시 로컬 백업으로 로그인 검증
+        if (localAcc && localAcc.password === password) {
+          msg.className = 'auth-msg success';
+          msg.innerText = `로컬 백업 데이터로 로그인되었습니다 (${localAcc.nickname}님)!`;
+          setTimeout(() => applyUserSession(localAcc), 600);
+          return;
+        }
         msg.className = 'auth-msg error';
-        msg.innerText = isLocal ? '파이썬 서버(127.0.0.1:8000)와 통신할 수 없습니다.' : '서버와 통신할 수 없습니다.';
+        msg.innerText = '아이디 또는 비밀번호를 다시 확인해주세요.';
       } finally {
         btn.disabled = false;
       }
@@ -481,19 +595,40 @@
       }
     });
 
+    // 최근 로그인 아이디 자동완성
+    const lastActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE);
+    if (lastActiveId) {
+      const loginUserInput = document.getElementById('loginUsername');
+      if (loginUserInput) {
+        loginUserInput.value = lastActiveId;
+        const pwdInput = document.getElementById('loginPassword');
+        if (pwdInput) setTimeout(() => pwdInput.focus(), 100);
+      }
+    }
+
+    // 전역 세이브 헬퍼 (서버 + 로컬스토리지 동시 저장)
+    window.syncLocalProgress = (progressData) => {
+      if (!window.currentUser || !window.currentUser.username) return;
+      saveLocalAccount({
+        ...window.currentUser,
+        ...progressData
+      });
+    };
+
     // 서버 상태 체크
     async function checkServer() {
       try {
         const res = await fetch(`${API_URL}/`);
         if (res.ok) {
-          document.getElementById('serverStatusBadge').innerText = isLocal ? '🟢 Python DB 서버: 127.0.0.1:8000' : '🟢 Vercel 온라인';
+          document.getElementById('serverStatusBadge').innerText = isLocal ? '🟢 Python DB 서버: 127.0.0.1:8000' : '🟢 Vercel 온라인 (클라우드/로컬 이중 백업)';
         }
       } catch (e) {
-        document.getElementById('serverStatusBadge').innerText = isLocal ? '🔴 Python 서버 미응답 (python server.py)' : '🟢 Vercel 온라인';
+        document.getElementById('serverStatusBadge').innerText = isLocal ? '🔴 Python 서버 미응답 (python server.py)' : '🟢 Vercel 온라인 (로컬 안전 백업 활성)';
       }
     }
     checkServer();
   </script>
+
 
 
   <script type="module" src="/src/main.js"></script>
