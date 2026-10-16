@@ -71,6 +71,11 @@ export default class MapManager {
     this.prompt = s.add.text(0, 0, '', { ...LABEL_STYLE, fontSize: '14px', backgroundColor: '#00000088', padding: { x: 8, y: 4 } })
       .setOrigin(0.5).setDepth(41).setVisible(false);
     this.upKey = s.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+    this.wKey = s.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    if (s.input.keyboard) {
+      s.input.keyboard.preventDefault = false;
+      s.input.keyboard.clearCaptures();
+    }
     return solids;
   }
 
@@ -115,39 +120,64 @@ export default class MapManager {
     const target = cfg.to && MAPS[cfg.to.map] ? cfg.to : null;   // 연결 대상이 없으면 비활성
     const color = target ? 0x7ee8fa : 0x8a8a8a;
     const glow = s.add.ellipse(cfg.x, y, 70, 110, color, target ? 0.25 : 0.12).setDepth(-5);
-    s.add.ellipse(cfg.x, y, 44, 90, color, target ? 0.6 : 0.3).setDepth(-4).setStrokeStyle(3, 0xffffff, target ? 0.9 : 0.4);
+    const core = s.add.ellipse(cfg.x, y, 44, 90, color, target ? 0.6 : 0.3).setDepth(-4).setStrokeStyle(3, 0xffffff, target ? 0.9 : 0.4);
     if (target) {
       s.tweens.add({ targets: glow, scaleX: 1.15, scaleY: 1.08, alpha: 0.45, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      // 마우스/터치 클릭으로도 포탈 이용 가능
+      core.setInteractive({ cursor: 'pointer' });
+      core.on('pointerdown', () => {
+        if (!this.transitioning && s.player && !s.player.isDead) {
+          const dist = Math.abs(s.player.x - cfg.x);
+          if (dist < 120) this.travel(target);
+        }
+      });
     }
     s.add.text(cfg.x, y - 72, cfg.label, { ...LABEL_STYLE, color: target ? '#ffffff' : '#bbbbbb' }).setOrigin(0.5).setDepth(40);
-    return { x: cfg.x, target };
+    return { x: cfg.x, target, core };
   }
 
-  // 매 프레임: 포탈 범위 검사, 안내 표시, ↑ 키 입력 시 전환
+  // 매 프레임: 포탈 범위 검사, 안내 표시, ↑ 또는 W 키 입력 시 전환
   update(player) {
-    if (this.transitioning) return;
-    const onGround = Math.abs(player.body.bottom - GAME.groundY) < 30;
-    const near = (!player.isDead && onGround) ? this.portals.find(p => Math.abs(player.x - p.x) < PORTAL_RANGE) : null;
+    if (this.transitioning || !player || !player.body) return;
+    const onGround = Math.abs(player.body.bottom - GAME.groundY) < 65 || player.body.blocked.down || player.body.touching.down;
+    const near = (!player.isDead && onGround) ? this.portals.find(p => Math.abs(player.x - p.x) < 70) : null;
 
-    if (!near) { this.prompt.setVisible(false); return; }
-    const text = near.target ? `↑  ${MAPS[near.target.map].name}(으)로 이동` : '지금은 갈 수 없는 길입니다';
+    if (!near) {
+      if (this.prompt && this.prompt.visible) this.prompt.setVisible(false);
+      return;
+    }
+    const text = near.target ? `[↑] 또는 [W] 또는 클릭: ${MAPS[near.target.map].name}(으)로 이동` : '지금은 갈 수 없는 길입니다';
     this.prompt.setPosition(near.x, GAME.groundY - 150).setText(text).setColor(near.target ? '#ffffff' : '#bbbbbb').setVisible(true);
-    if (near.target && Phaser.Input.Keyboard.JustDown(this.upKey)) this.travel(near.target);
+
+    const isUpPressed = this.upKey && Phaser.Input.Keyboard.JustDown(this.upKey);
+    const isWPressed = this.wKey && Phaser.Input.Keyboard.JustDown(this.wKey);
+
+    if (near.target && (isUpPressed || isWPressed)) {
+      this.travel(near.target);
+    }
   }
 
   travel(to) {
     if (this.transitioning || !to || !MAPS[to.map]) return;   // 중복 전환 방지
     this.transitioning = true;
     const s = this.scene;
-    this.prompt.setVisible(false);
+    if (this.prompt) this.prompt.setVisible(false);
     if (s.combat) s.combat.clearWeapons();
     this.saveState();
     if (window.saveGameDataToServer) window.saveGameDataToServer(false);
     s.physics.pause();                                          // 전환 중 피격/이동 차단
-    s.cameras.main.fadeOut(250, 0, 0, 0);
-    s.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+
+    let restarted = false;
+    const doRestart = () => {
+      if (restarted) return;
+      restarted = true;
       s.scene.restart({ mapId: to.map, spawnX: to.x });
-    });
+    };
+
+    s.cameras.main.fadeOut(200, 0, 0, 0);
+    s.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, doRestart);
+    // 안전 타임아웃 (FADE_OUT_COMPLETE 이벤트 누락 시에도 무조건 250ms 후 다음 맵으로 전환 보장)
+    s.time.delayedCall(250, doRestart);
   }
 
   // 새 맵 진입 연출 (페이드 인 + 맵 이름 배너)
@@ -165,11 +195,19 @@ export default class MapManager {
 
   saveState() {
     const s = this.scene;
-    s.registry.set(STATE_KEY, {
+    const st = {
       level: s.xp.level, exp: s.xp.exp, hp: s.player.hp, mp: s.player.mp, kills: s.kills,
       jobTier: s.player.jobTier,
       quest: s.quest
-    });
+    };
+    s.registry.set(STATE_KEY, st);
+    if (window.currentUser) {
+      Object.assign(window.currentUser, {
+        level: s.xp.level, exp: s.xp.exp, hp: s.player.hp, mp: s.player.mp, kills: s.kills,
+        job_tier: s.player.jobTier, quest_status: s.quest ? s.quest.status : 'NOT_STARTED',
+        quest_kills: s.quest ? s.quest.kills : 0
+      });
+    }
   }
 
   restoreState() {

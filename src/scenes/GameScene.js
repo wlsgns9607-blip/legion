@@ -104,9 +104,15 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.hud = new HUD(this, map.name);
 
-    // 로그인된 유저 데이터가 있으면 즉시 로드
+    // 로그인된 유저 데이터 처리: 첫 진입 시에만 loadUserData를 실행하고, 맵 전환 시에는 현재 세션(restoreState) 유지
     if (window.currentUser) {
-      this.loadUserData(window.currentUser, false);
+      if (!this.registry.get('playerState')) {
+        this.loadUserData(window.currentUser, false);
+      } else {
+        this.isGameActive = true;
+        this.physics.resume();
+        if (this.input.keyboard) this.input.keyboard.enabled = true;
+      }
     }
 
     // 서버 DB 자동/수동 저장 인터페이스 등록
