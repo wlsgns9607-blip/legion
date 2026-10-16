@@ -214,28 +214,25 @@ export default class CombatSystem {
       return;
     }
 
-    // [2차 기본 공격: 몬스터에 꽂힌 표창 회수 가능 & 3명 이하 타격]
-    if (proj.canPin && !monster.isDead && proj.hitCount <= (proj.maxHits || 3)) {
+    // [표창/쿠나이 몬스터 꽂힘]: 통과하지 않고 몬스터 몸에 콱! 꽂혀서 박힘!
+    if (!monster.isDead) {
       proj.pinTo(monster);
-      this.floatText(monster.x, monster.y - 30, `꽂힘! (회수: Z)`, '#ffd32a', 13);
+
+      // 타격감 넘치는 카메라 흔들림 & 사운드 대용 이펙트
+      this.scene.cameras.main.shake(70, 0.005);
+
+      if (proj.tier === 1) {
+        this.floatText(monster.x, monster.y - 30, `콱! 꽂힘!`, '#00d2d3', 14);
+      } else if (proj.tier === 2) {
+        this.floatText(monster.x, monster.y - 30, `꽂힘! [Z:회수]`, '#ffd32a', 14);
+      } else {
+        this.floatText(monster.x, monster.y - 35, `거대 무기 꽂힘!`, '#ff4757', 15);
+      }
       return;
-    }
-
-    // [1차 공격: 표창만 2명 이하 타격]
-    if (proj.tier === 1) {
-      if (proj.hitCount >= 2) {
-        proj.safeDestroy();
-      }
-      // 1명째 맞았을 때는 관통하여 계속 날아감 (최대 2명 타격)
     } else {
-      // 3차 또는 기타 무기
-      if (proj.hitCount >= (proj.maxHits || 3)) {
-        proj.suspend();
-      }
-    }
-
-    if (monster.isDead) {
-      this.scene.cameras.main.shake(100, 0.005);
+      // 몬스터가 죽었을 때는 표창도 함께 소멸
+      proj.safeDestroy();
+      this.scene.cameras.main.shake(100, 0.006);
       this.scene.events.emit('monster-killed', monster);
     }
   }
@@ -251,25 +248,39 @@ export default class CombatSystem {
   hitEffect(x, y, damage, isCrit, dir, isWind = false) {
     const s = this.scene;
 
+    // 표창 꽂힘 순간의 원형 충격파 (임팩트 링)
+    const ring = s.add.ellipse(x, y, 20, 20, isWind ? 0x1dd1a1 : (isCrit ? 0xffa502 : 0xffffff), 0.8)
+      .setDepth(21)
+      .setStrokeStyle(3, 0xffffff, 0.9);
+    s.tweens.add({
+      targets: ring,
+      scaleX: 3.2,
+      scaleY: 3.2,
+      alpha: 0,
+      duration: 160,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy()
+    });
+
     // 바람 속성 참격 또는 일반 슬래시
     const texName = isWind ? 'wind_slash' : 'hit_slash';
     const slash = s.add.sprite(x, y, texName).setDepth(22);
-    slash.setScale(isWind ? 1.4 : (isCrit ? 1.3 : 0.95));
+    slash.setScale(isWind ? 1.5 : (isCrit ? 1.4 : 1.1));
     slash.setAngle(dir > 0 ? (isWind ? 45 : 25) : (isWind ? -135 : -155));
     s.tweens.add({
       targets: slash,
-      scaleX: slash.scaleX * 1.3,
-      scaleY: slash.scaleY * 1.3,
+      scaleX: slash.scaleX * 1.4,
+      scaleY: slash.scaleY * 1.4,
       alpha: 0,
-      duration: isWind ? 180 : 130,
+      duration: isWind ? 190 : 140,
       onComplete: () => slash.destroy()
     });
 
-    // 스파크 파티클
-    this.sparkEmitter.explode(isCrit ? 12 : 6, x, y);
+    // 스파크 파티클 폭발 (강렬한 타격감)
+    this.sparkEmitter.explode(isCrit ? 16 : 10, x, y);
 
-    // 가벼운 화면 흔들림
-    s.cameras.main.shake(isCrit ? 80 : 45, isCrit ? 0.0045 : 0.002);
+    // 찰진 화면 진동
+    s.cameras.main.shake(isCrit ? 90 : 60, isCrit ? 0.006 : 0.0035);
 
     // 메이플스토리 스타일 데미지 스킨 연출
     this.showDamageSkin(x + Phaser.Math.Between(-8, 8), y - 24, damage, isCrit, isWind);

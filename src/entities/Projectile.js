@@ -106,21 +106,49 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  // 몬스터에게 꽂히는 상태로 전환 (2차 이상 스킬 특징)
+  // 몬스터에게 꽂히는 상태로 전환 (몬스터를 통과하지 않고 몸에 콱 박힘!)
   pinTo(monster) {
     if (!monster || monster.isDead) {
-      this.suspend();
+      this.safeDestroy();
       return;
     }
     this.state = WEAPON_STATE.PINNED;
     this.pinnedMonster = monster;
-    this.pinnedOffsetX = Phaser.Math.Clamp(this.x - monster.x, -16, 16);
-    this.pinnedOffsetY = Phaser.Math.Clamp(this.y - monster.y, -12, 12);
+    this.pinnedTime = this.scene ? this.scene.time.now : Date.now();
+
+    // 몬스터 몸통에 날아온 방향에 맞춰 깊숙이 박힌 오프셋 계산
+    const depthDir = this.dir > 0 ? -4 : 4;
+    this.pinnedOffsetX = Phaser.Math.Clamp((this.x - monster.x) + depthDir, -16, 16);
+    this.pinnedOffsetY = Phaser.Math.Clamp(this.y - monster.y, -16, 12);
     this.setVelocity(0, 0);
-    this.body.enable = false; // 꽂혀있는 동안은 추가 직접 충돌 방지
+    this.body.enable = false; // 꽂혀있는 동안은 추가 관통 비행 차단
+
+    // 회전 정지 및 몸에 비스듬히 꽂힌 칼날 각도 고정
+    if (this.weaponType.includes('kunai')) {
+      this.rotation = (this.dir > 0 ? 0.2 : Math.PI - 0.2) + Phaser.Math.FloatBetween(-0.15, 0.15);
+    } else {
+      this.angle = (this.dir > 0 ? 25 : -25) + Phaser.Math.Between(-12, 12);
+    }
+
+    // 꽂히는 순간의 짜릿한 칼날 진동 연출 (타격감)
+    if (this.scene) {
+      this.scene.tweens.killTweensOf(this);
+      const origScale = this.cfg.scale || 1.0;
+      this.setScale(origScale * 1.35);
+      this.scene.tweens.add({
+        targets: this,
+        scaleX: origScale,
+        scaleY: origScale,
+        angle: this.angle + (this.dir > 0 ? 6 : -6),
+        duration: 70,
+        yoyo: true,
+        repeat: 2,
+        ease: 'Quad.easeInOut'
+      });
+    }
 
     if (this.aura && this.aura.active) {
-      this.aura.setAlpha(0.3).setScale(0.8);
+      this.aura.setAlpha(0.2).setScale(0.7);
     }
   }
 
@@ -218,16 +246,26 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
 
     const mapWidth = (this.scene && this.scene.maps && this.scene.maps.map) ? this.scene.maps.map.width : GAME.worldWidth;
 
-    // 0. 몬스터에 꽂혀있는 (PINNED) 동작
+    // 0. 몬스터에 꽂혀있는 (PINNED) 동작 (몬스터와 함께 움직임)
     if (this.state === WEAPON_STATE.PINNED) {
       if (!this.pinnedMonster || !this.pinnedMonster.active || this.pinnedMonster.isDead) {
         this.pinnedMonster = null;
-        this.body.enable = true;
-        this.suspend();
+        this.safeDestroy();
         return;
       }
       this.x = this.pinnedMonster.x + this.pinnedOffsetX;
       this.y = this.pinnedMonster.y + this.pinnedOffsetY;
+
+      // 꽂힌 지 3.5초 경과 시 지속 출혈 피해 후 소멸
+      if (this.pinnedTime && (time - this.pinnedTime > 3500)) {
+        if (this.scene && this.scene.combat && this.pinnedMonster.active && !this.pinnedMonster.isDead) {
+          this.pinnedMonster.takeDamage(Math.round(this.damage * 0.4), this.dir || 1, time);
+          this.scene.combat.floatText(this.x, this.y - 20, '지속피해', '#e74c3c', 12);
+        }
+        this.safeDestroy();
+        return;
+      }
+
       this.updateAuraPos();
       return;
     }

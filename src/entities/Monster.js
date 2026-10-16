@@ -41,20 +41,29 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     if (this.isDead) return;
     this.hp -= amount;
     this.state = 'hurt';
-    this.hurtUntil = time + 220;
-    this.setVelocity(dir * 220, -180);
-    this.setTintFill(0xffffff);
-    this.scene.time.delayedCall(120, () => this.active && this.clearTint());
+    this.hurtUntil = time + 260;
 
-    // 피격 시 쫀득한 스쿼시 연출 (타격감)
+    // 히트 스탑: 꽂히는 순간 순간 정지했다가 넉백되는 쫀득한 손맛
+    this.setVelocity(0, 0);
+    this.setTintFill(0xffffff);
+
+    this.scene.time.delayedCall(45, () => {
+      if (this.active && !this.isDead) {
+        this.setVelocity(dir * 240, -170);
+      }
+    });
+
+    this.scene.time.delayedCall(110, () => this.active && this.clearTint());
+
+    // 피격 시 쫀득한 스쿼시 & 셰이크 연출 (타격감)
     this.scene.tweens.killTweensOf(this);
     this.setScale(1);
     this.scene.tweens.add({
       targets: this,
-      scaleX: 1.2,
-      scaleY: 0.82,
+      scaleX: 1.25,
+      scaleY: 0.8,
       yoyo: true,
-      duration: 55,
+      duration: 60,
       onComplete: () => { if (this.active && !this.isDead) this.setScale(1); }
     });
 
