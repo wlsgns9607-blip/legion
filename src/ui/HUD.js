@@ -48,6 +48,17 @@ export default class HUD {
   }
 
   update(player, xp, kills, quest = null) {
+    if (!window.currentUser || !player.scene.isGameActive) {
+      this.tierBadge.setText('🔒 로그인 대기 중').setColor('#ff6b6b');
+      this.lv.setText('Lv.--');
+      this.skillStatus.setText('로그인해야 캐릭터 스킬과 게임이 작동합니다').setColor('#ff9f43');
+      this.weaponStatus.setText('회원가입 또는 로그인 후 플레이하세요').setColor('#c8d6e5');
+      this.telekenesisBadge.setText('※ 화면 중앙의 창에서 로그인해주세요').setColor('#ffd32a');
+      this.questTitle.setText('🔒 로그인 필요').setColor('#ff6b6b');
+      this.questProgress.setText('로그인 후 퀘스트 이용 가능').setColor('#dfe6e9');
+      return;
+    }
+
     const tier = player.jobTier || 1;
     let tierName = '';
     if (tier === 1) tierName = `1차: 시노비 (30Lv 2차 전직)`;

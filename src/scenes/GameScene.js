@@ -14,7 +14,14 @@ export default class GameScene extends Phaser.Scene {
 
   create(data = {}) {
     const GY = GAME.groundY;
-    this.physics.resume();
+
+    // 로그인 상태 확인: 로그인 전이면 물리/조작 정지, 로그인 완료 시 활성화
+    this.isGameActive = !!window.currentUser;
+    if (this.isGameActive) {
+      this.physics.resume();
+    } else {
+      this.physics.pause();
+    }
 
     // 맵 구성 (배경 + 지면/발판 + 포탈)
     this.maps = new MapManager(this, data.mapId || START_MAP);
@@ -137,6 +144,9 @@ export default class GameScene extends Phaser.Scene {
 
   loadUserData(user, showNotice = true) {
     if (!user) return;
+    this.isGameActive = true;
+    this.physics.resume();
+
     this.xp.level = user.level || 1;
     this.xp.exp = user.exp || 0;
     this.player.applyLevelUp(this.xp.level);
@@ -149,7 +159,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.updateQuestBubble();
     if (showNotice && this.combat) {
-      this.combat.floatText(this.player.x, this.player.y - 60, `환영합니다! [${user.nickname}]님 (Lv.${this.xp.level})`, '#ffd32a', 18);
+      this.combat.floatText(this.player.x, this.player.y - 65, `★ 로그인 완료! [${user.nickname}] 스킬 활성화! ★`, '#ffd32a', 20);
     }
   }
 

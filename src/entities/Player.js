@@ -55,6 +55,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   update(time) {
     if (this.isDead) { this.setVelocityX(0); return; }
+
+    // [로그인 필수] 로그인하지 않은 상태에서는 이동 및 모든 스킬 작동 차단
+    if (!window.currentUser || (this.scene && !this.scene.isGameActive)) {
+      this.setVelocityX(0);
+      return;
+    }
+
     this.setAlpha(time < this.invulnUntil && Math.floor(time / 80) % 2 ? 0.4 : 1);
     if (time < this.stunUntil) return;
 
