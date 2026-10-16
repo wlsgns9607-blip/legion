@@ -14,6 +14,10 @@
       font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
       user-select: none;
     }
+    input, button, textarea, select {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
     #game {
       width: 100vw;
       height: 100vh;
@@ -287,7 +291,44 @@
   <script>
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const API_URL = isLocal ? 'http://127.0.0.1:8000' : '';
+    window.API_URL = API_URL;
     window.currentUser = null;
+
+    // [중요] 회원가입 & 로그인 입력창에서 스페이스바, 방향키, 영문/숫자 등 모든 키가 씹히지 않도록 완벽 보장
+    function setupKeyboardProtection() {
+      const authInputs = document.querySelectorAll('#authOverlay input');
+      authInputs.forEach(input => {
+        ['keydown', 'keyup', 'keypress'].forEach(evtName => {
+          input.addEventListener(evtName, (e) => {
+            // 인풋창 내부 타이핑 시 상위 Phaser 윈도우 키보드 리스너로 이벤트가 전달되어 차단되는 것을 방지
+            e.stopPropagation();
+          }, false);
+        });
+
+        input.addEventListener('focus', () => {
+          if (window.phaserGame && window.phaserGame.scene) {
+            window.phaserGame.scene.scenes.forEach(s => {
+              if (s.input && s.input.keyboard) {
+                s.input.keyboard.enabled = false;
+              }
+            });
+          }
+        });
+      });
+
+      // 윈도우 레벨 캡처 가드: 인풋 포커스 상태에서 눌린 키는 절대 브라우저 기본 동작이 취소되지 않도록 보호
+      window.addEventListener('keydown', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+          e.stopPropagation();
+        }
+      }, true);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupKeyboardProtection);
+    } else {
+      setupKeyboardProtection();
+    }
 
     // 탭 전환
     function switchAuthTab(type) {
@@ -305,11 +346,13 @@
         tabRegister.classList.remove('active');
         formLogin.style.display = 'block';
         formRegister.style.display = 'none';
+        setTimeout(() => document.getElementById('loginUsername')?.focus(), 50);
       } else {
         tabRegister.classList.add('active');
         tabLogin.classList.remove('active');
         formRegister.style.display = 'block';
         formLogin.style.display = 'none';
+        setTimeout(() => document.getElementById('regUsername')?.focus(), 50);
       }
     }
 
@@ -347,7 +390,7 @@
         }
       } catch (err) {
         msg.className = 'auth-msg error';
-        msg.innerText = '파이썬 서버(127.0.0.1:8000)와 통신할 수 없습니다.';
+        msg.innerText = isLocal ? '파이썬 서버(127.0.0.1:8000)와 통신할 수 없습니다.' : '서버와 통신할 수 없습니다.';
       } finally {
         btn.disabled = false;
       }
@@ -385,7 +428,7 @@
         }
       } catch (err) {
         msg.className = 'auth-msg error';
-        msg.innerText = '파이썬 서버(127.0.0.1:8000)와 통신할 수 없습니다.';
+        msg.innerText = isLocal ? '파이썬 서버(127.0.0.1:8000)와 통신할 수 없습니다.' : '서버와 통신할 수 없습니다.';
       } finally {
         btn.disabled = false;
       }
@@ -403,8 +446,15 @@
       userBar.style.display = 'flex';
       document.getElementById('userNickDisplay').innerText = `${user.nickname} (Lv.${user.level})`;
 
-      // Phaser 씬이 준비되었으면 데이터 주입 및 스킬/물리 활성화
+      // Phaser 씬이 준비되었으면 데이터 주입 및 스킬/물리/키보드 활성화
       if (window.phaserGame && window.phaserGame.scene) {
+        window.phaserGame.scene.scenes.forEach(s => {
+          if (s.input && s.input.keyboard) {
+            s.input.keyboard.enabled = true;
+            s.input.keyboard.preventDefault = false;
+            s.input.keyboard.clearCaptures();
+          }
+        });
         const gameScene = window.phaserGame.scene.getScene('GameScene');
         if (gameScene && gameScene.loadUserData) {
           gameScene.loadUserData(user);
@@ -436,7 +486,7 @@
       try {
         const res = await fetch(`${API_URL}/`);
         if (res.ok) {
-          document.getElementById('serverStatusBadge').innerText = isLocal ? '🟢 Python DB 서버: 127.0.0.1:8000' : '🟢 Vercel Cloud DB 온라인';
+          document.getElementById('serverStatusBadge').innerText = isLocal ? '🟢 Python DB 서버: 127.0.0.1:8000' : '🟢 Vercel 온라인';
         }
       } catch (e) {
         document.getElementById('serverStatusBadge').innerText = isLocal ? '🔴 Python 서버 미응답 (python server.py)' : '🟢 Vercel 온라인';
@@ -444,6 +494,7 @@
     }
     checkServer();
   </script>
+
 
   <script type="module" src="/src/main.js"></script>
 </body>

@@ -21,6 +21,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.key2 = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
     this.key3 = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
 
+    // 키보드 캡처 방지: 브라우저 기본 키 이벤트(Space, Arrow, Backspace 등)를 가로채지 않도록 해제
+    if (scene.input.keyboard) {
+      scene.input.keyboard.preventDefault = false;
+      scene.input.keyboard.clearCaptures();
+    }
+
     this.facing = 1;
     this.maxHp = PLAYER.maxHp;
     this.hp = this.maxHp;

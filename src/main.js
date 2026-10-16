@@ -9,7 +9,13 @@ window.phaserGame = new Phaser.Game({
   width: GAME.width,
   height: GAME.height,
   backgroundColor: '#000000',
+  input: {
+    keyboard: {
+      preventDefault: false
+    }
+  },
   physics: { default: 'arcade', arcade: { gravity: { y: GAME.gravity }, debug: false } },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [BootScene, GameScene]
 });
+

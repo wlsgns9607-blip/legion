@@ -15,12 +15,18 @@ export default class GameScene extends Phaser.Scene {
   create(data = {}) {
     const GY = GAME.groundY;
 
-    // 로그인 상태 확인: 로그인 전이면 물리/조작 정지, 로그인 완료 시 활성화
+    // 로그인 상태 확인: 로그인 전이면 물리/조작 정지 및 키보드 입력 비활성화(회원가입 폼 키 입력 보장)
     this.isGameActive = !!window.currentUser;
     if (this.isGameActive) {
       this.physics.resume();
+      if (this.input.keyboard) this.input.keyboard.enabled = true;
     } else {
       this.physics.pause();
+      if (this.input.keyboard) this.input.keyboard.enabled = false;
+    }
+    if (this.input.keyboard) {
+      this.input.keyboard.preventDefault = false;
+      this.input.keyboard.clearCaptures();
     }
 
     // 맵 구성 (배경 + 지면/발판 + 포탈)
@@ -117,8 +123,10 @@ export default class GameScene extends Phaser.Scene {
         quest_status: this.quest.status,
         quest_kills: this.quest.kills
       };
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const apiBase = (typeof window.API_URL === 'string') ? window.API_URL : (isLocal ? 'http://127.0.0.1:8000' : '');
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/save', {
+        const res = await fetch(`${apiBase}/api/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -146,6 +154,11 @@ export default class GameScene extends Phaser.Scene {
     if (!user) return;
     this.isGameActive = true;
     this.physics.resume();
+    if (this.input.keyboard) {
+      this.input.keyboard.enabled = true;
+      this.input.keyboard.preventDefault = false;
+      this.input.keyboard.clearCaptures();
+    }
 
     this.xp.level = user.level || 1;
     this.xp.exp = user.exp || 0;
@@ -169,6 +182,10 @@ export default class GameScene extends Phaser.Scene {
     this.npcPrompt = null;
     this.questDialogUI = null;
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    if (this.input.keyboard) {
+      this.input.keyboard.preventDefault = false;
+      this.input.keyboard.clearCaptures();
+    }
 
     if (map.npcs && map.npcs.length > 0) {
       const npcData = map.npcs[0];
