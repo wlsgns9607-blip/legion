@@ -27,6 +27,9 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+def hash_pw(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
@@ -49,13 +52,17 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    # gsl05137 기본 계정 자동 생성 (없을 경우)
+    cursor.execute("SELECT id FROM users WHERE username = ?", ("gsl05137",))
+    if not cursor.fetchone():
+        cursor.execute("""
+        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills)
+        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0)
+        """, ("gsl05137", hash_pw("wlsgns1996"), "진훈", "시노비진훈"))
     conn.commit()
     conn.close()
 
 init_db()
-
-def hash_pw(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 class RegisterRequest(BaseModel):
     username: str

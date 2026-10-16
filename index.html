@@ -595,16 +595,33 @@
       }
     });
 
-    // 최근 로그인 아이디 자동완성
-    const lastActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE);
-    if (lastActiveId) {
-      const loginUserInput = document.getElementById('loginUsername');
-      if (loginUserInput) {
-        loginUserInput.value = lastActiveId;
-        const pwdInput = document.getElementById('loginPassword');
-        if (pwdInput) setTimeout(() => pwdInput.focus(), 100);
-      }
+    // 기본 계정 (gsl05137 / wlsgns1996) 영구 탑재 및 자동완성
+    const defaultAccounts = getLocalAccounts();
+    if (!defaultAccounts['gsl05137']) {
+      saveLocalAccount({
+        username: 'gsl05137',
+        name: '진훈',
+        nickname: '시노비진훈',
+        level: 1,
+        exp: 0,
+        hp: 200,
+        mp: 200,
+        job_tier: 1,
+        kills: 0,
+        quest_status: 'NOT_STARTED',
+        quest_kills: 0
+      }, 'wlsgns1996');
     }
+
+    // 최근 로그인 아이디 및 기본 계정 자동완성
+    const lastActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE) || 'gsl05137';
+    const loginUserInput = document.getElementById('loginUsername');
+    const pwdInput = document.getElementById('loginPassword');
+    if (loginUserInput) loginUserInput.value = lastActiveId;
+    if (pwdInput && lastActiveId === 'gsl05137') {
+      pwdInput.value = 'wlsgns1996';
+    }
+
 
     // 전역 세이브 헬퍼 (서버 + 로컬스토리지 동시 저장)
     window.syncLocalProgress = (progressData) => {
