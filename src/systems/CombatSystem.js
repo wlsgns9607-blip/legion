@@ -1,5 +1,5 @@
 import Projectile from '../entities/Projectile.js';
-import { MONSTER } from '../config/gameConfig.js';
+import { MONSTER, PLAYER } from '../config/gameConfig.js';
 
 // 충돌 판정과 피해 계산은 여기 한 곳에서만 처리한다.
 export default class CombatSystem {
@@ -22,44 +22,50 @@ export default class CombatSystem {
     physics.add.overlap(player, monsters, (p, monster) => this.onContact(p, monster));
   }
 
+  // 필드에 비행/조정 중인 무기 최대 개수 (최대 4개) 상한선 검증
+  canFire(player) {
+    const active = this.getActiveWeapons();
+    const maxAllowed = PLAYER.maxActiveWeapons || 4;
+    return active.length < maxAllowed;
+  }
+
   fireShuriken(player) {
     return this.fireTier1(player);
   }
 
-  // 1차 공격 (Ctrl): 표창만 가능, 최대 2명 이하 타격
+  // 1차 공격 (Ctrl): 표창만 가능, 최대 2명 이하 타격, 필드 최대 4개 제한
   fireTier1(player) {
-    const p = new Projectile(this.scene, player.x + player.facing * 32, player.y - 8, 'shuriken', {
+    if (!this.canFire(player)) return null;
+
+    const p = new Projectile(this.scene, player.x + player.facing * 28, player.y - 8, 'shuriken', {
       tier: 1,
       maxHits: 2,           // 1차: 2명 이하 타격
       canPin: false
     });
     this.projectiles.add(p);
     p.launch(player.facing, player.damage);
-    this.floatText(player.x, player.y - 45, '1차: 표창 투척 (2명 관통 타격)', '#00d2d3', 14);
     return [p];
   }
 
-  // 2차 기본 공격: 쿠나이와 표창 가능, 최대 3명 이하 타격, 몬스터에 꽂힘 가능
+  // 2차 기본 공격: 쿠나이와 표창 가능, 최대 3명 이하 타격, 몬스터에 꽂힘 가능, 필드 최대 4개 제한
   fireTier2(player, weaponType = null) {
     const weapon = weaponType || player.selectedWeapon || 'shuriken';
     const suspended = this.getSuspendedWeapon(weapon);
     if (suspended) {
       this.relaunchWeapons(player.facing);
-      this.floatText(player.x, player.y - 45, `2차: ${suspended.cfg.name} 재발사!`, '#feca57', 15);
       return this.getActiveWeapons();
     }
 
+    if (!this.canFire(player)) return null;
+
     const baseAngle = player.facing > 0 ? 0 : Math.PI;
-    const p = new Projectile(this.scene, player.x + player.facing * 30, player.y - 10, weapon, {
+    const p = new Projectile(this.scene, player.x + player.facing * 28, player.y - 10, weapon, {
       tier: 2,
       maxHits: 3,           // 2차 기본: 3명 이하 타격
       canPin: true          // 몬스터에 꽂힌 표창 회수 가능
     });
     this.projectiles.add(p);
     p.launchAngle(baseAngle, player.damage, player.facing);
-
-    const name = weapon === 'kunai' ? '쿠나이' : '표창';
-    this.floatText(player.x, player.y - 45, `2차: ${name} 투척 (최대 3명 타격, 꽂힘 가능)`, '#feca57', 14);
     return [p];
   }
 
@@ -163,8 +169,9 @@ export default class CombatSystem {
     return reloaded;
   }
 
-  // 무기 전탄 회수 (몬스터에 꽂힌 표창 + 공중 대기 무기)
+  // 무기 전탄 회수 (몬스터에 꽂힌 표창 + 공중 대기 무기, 2차 전직부터 가능)
   recallWeapons(player) {
+    if (!player || player.jobTier < 2) return 0;
     const weapons = this.getActiveWeapons();
     const pinned = weapons.filter(w => w.state === 'PINNED').length;
     weapons.forEach(w => w.recall(player));
@@ -214,26 +221,33 @@ export default class CombatSystem {
       return;
     }
 
-    // [표창/쿠나이 몬스터 꽂힘]: 통과하지 않고 몬스터 몸에 콱! 꽂혀서 박힘!
-    if (!monster.isDead) {
-      proj.pinTo(monster);
+    // [표창 (Shuriken) 타격 메커닉: 1개당 정확히 2마리 관통 타격!]
+    if (proj.weaponType.includes('shuriken')) {
+      if (monster.isDead) {
+        this.scene.cameras.main.shake(100, 0.006);
+        this.scene.events.emit('monster-killed', monster);
+      }
 
-      // 타격감 넘치는 카메라 흔들림 & 사운드 대용 이펙트
-      this.scene.cameras.main.shake(70, 0.005);
-
-      if (proj.tier === 1) {
-        this.floatText(monster.x, monster.y - 30, `콱! 꽂힘!`, '#00d2d3', 14);
-      } else if (proj.tier === 2) {
-        this.floatText(monster.x, monster.y - 30, `꽂힘! [Z:회수]`, '#ffd32a', 14);
-      } else {
-        this.floatText(monster.x, monster.y - 35, `거대 무기 꽂힘!`, '#ff4757', 15);
+      // 표창 1개당 2마리 타격 판정: 2마리 달성 시 즉시 소멸하여 플레이어에게 즉시 리필
+      if (proj.hitCount >= 2) {
+        proj.safeDestroy();
       }
       return;
+    }
+
+    // [쿠나이 (Kunai) 타격 메커닉: 2차부터 몬스터 몸에 꽂힘]
+    if (!monster.isDead && proj.canPin) {
+      proj.pinTo(monster);
+      this.scene.cameras.main.shake(70, 0.005);
+      this.floatText(monster.x, monster.y - 30, `꽂힘! [Z:회수]`, '#ffd32a', 14);
+      return;
     } else {
-      // 몬스터가 죽었을 때는 표창도 함께 소멸
+      // 몬스터 사망 또는 꽂힘 불가 시 소멸
       proj.safeDestroy();
-      this.scene.cameras.main.shake(100, 0.006);
-      this.scene.events.emit('monster-killed', monster);
+      if (monster.isDead) {
+        this.scene.cameras.main.shake(100, 0.006);
+        this.scene.events.emit('monster-killed', monster);
+      }
     }
   }
 

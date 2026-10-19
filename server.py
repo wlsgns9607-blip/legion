@@ -52,12 +52,23 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    # 캐릭터 커스터마이징 컬럼 (칭호, 도복 색상, 주무기 성향) 마이그레이션
+    for col_def in [
+        ("title", "TEXT DEFAULT '초보 시노비'"),
+        ("color_theme", "TEXT DEFAULT 'default'"),
+        ("selected_weapon", "TEXT DEFAULT 'shuriken'")
+    ]:
+        try:
+            cursor.execute(f"ALTER TABLE users ADD COLUMN {col_def[0]} {col_def[1]}")
+        except Exception:
+            pass
+
     # gsl05137 기본 계정 자동 생성 (없을 경우)
     cursor.execute("SELECT id FROM users WHERE username = ?", ("gsl05137",))
     if not cursor.fetchone():
         cursor.execute("""
-        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills)
-        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0)
+        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon)
+        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0, '그림자의 계승자', 'default', 'shuriken')
         """, ("gsl05137", hash_pw("wlsgns1996"), "진훈", "시노비진훈"))
     conn.commit()
     conn.close()
@@ -85,6 +96,13 @@ class SaveDataRequest(BaseModel):
     quest_status: str
     quest_kills: int
 
+class UpdateCharacterRequest(BaseModel):
+    username: str
+    nickname: str | None = None
+    title: str | None = None
+    color_theme: str | None = None
+    selected_weapon: str | None = None
+
 @app.get("/")
 def read_root():
     return {"status": "ok", "message": "Legion Game DB Server Running"}
@@ -110,12 +128,15 @@ def register(req: RegisterRequest):
 
     hashed = hash_pw(password)
     cursor.execute("""
-        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills)
-        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0)
+        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon)
+        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0, '초보 시노비', 'default', 'shuriken')
     """, (username, hashed, name, nickname))
     conn.commit()
 
-    cursor.execute("SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills FROM users WHERE username = ?", (username,))
+    cursor.execute("""
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon
+        FROM users WHERE username = ?
+    """, (username,))
     user = dict(cursor.fetchone())
     conn.close()
 
@@ -134,7 +155,7 @@ def login(req: LoginRequest):
     hashed = hash_pw(password)
 
     cursor.execute("""
-        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon
         FROM users
         WHERE username = ? AND password = ?
     """, (username, hashed))
@@ -162,12 +183,55 @@ def save_data(req: SaveDataRequest):
 
     return {"status": "success", "message": "데이터가 성공적으로 저장되었습니다."}
 
+@app.post("/api/character/update")
+def update_character(req: UpdateCharacterRequest):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    updates = []
+    params = []
+    if req.nickname is not None and req.nickname.strip():
+        updates.append("nickname = ?")
+        params.append(req.nickname.strip())
+    if req.title is not None and req.title.strip():
+        updates.append("title = ?")
+        params.append(req.title.strip())
+    if req.color_theme is not None:
+        updates.append("color_theme = ?")
+        params.append(req.color_theme)
+    if req.selected_weapon is not None:
+        updates.append("selected_weapon = ?")
+        params.append(req.selected_weapon)
+
+    if not updates:
+        conn.close()
+        raise HTTPException(status_code=400, detail="변경할 항목이 없습니다.")
+
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+    sql = f"UPDATE users SET {', '.join(updates)} WHERE username = ?"
+    params.append(req.username)
+
+    cursor.execute(sql, tuple(params))
+    conn.commit()
+
+    cursor.execute("""
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon
+        FROM users WHERE username = ?
+    """, (req.username,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="유저를 찾을 수 없습니다.")
+
+    return {"status": "success", "message": "캐릭터 설정이 저장되었습니다.", "user": dict(row)}
+
 @app.get("/api/user/{username}")
 def get_user(username: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, created_at, updated_at
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, created_at, updated_at
         FROM users WHERE username = ?
     """, (username,))
     row = cursor.fetchone()

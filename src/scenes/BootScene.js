@@ -60,18 +60,183 @@ export default class BootScene extends Phaser.Scene {
       g.fillStyle(0x9b59b6).fillRoundedRect(8, 13, 46, 34, { tl: 22, tr: 22, bl: 10, br: 10 });
       // 광택 하이라이트
       g.fillStyle(0xffffff, 0.4).fillCircle(20, 18, 5).fillCircle(15, 23, 2.5);
-
       // 크고 귀여운 눈
       g.fillStyle(0xffffff).fillCircle(22, 28, 8).fillCircle(40, 28, 8);
       g.fillStyle(0x2c3e50).fillCircle(23, 28, 4.5).fillCircle(39, 28, 4.5);
       g.fillStyle(0xffffff).fillCircle(22, 26, 2).fillCircle(38, 26, 2);
-      // 앙증맞은 볼터치
       g.fillStyle(0xf368e0, 0.6).fillCircle(15, 36, 4).fillCircle(47, 36, 4);
-      // 입
       g.fillStyle(0x2c2c54).fillCircle(31, 35, 3);
       g.fillStyle(0xff6b81).fillCircle(31, 36, 2);
-      // 이마 뿔 장식
       g.fillStyle(0xf1c40f).fillTriangle(31, 1, 26, 12, 36, 12);
+    });
+
+    // 버섯 포자몬 (64 x 56)
+    tex('monster_mushroom', 64, 56, g => {
+      g.fillStyle(0x000000, 0.25).fillEllipse(32, 52, 48, 8);
+      // 기둥 몸통
+      g.fillStyle(0xfff3e0).fillRoundedRect(16, 26, 32, 26, 10);
+      // 붉은 주황 버섯 갓
+      g.fillStyle(0xe67e22).fillEllipse(32, 22, 58, 36);
+      g.fillStyle(0xd35400).fillEllipse(32, 24, 52, 30);
+      g.fillStyle(0xffffff, 0.85).fillCircle(20, 16, 5).fillCircle(44, 16, 6).fillCircle(32, 10, 4);
+      // 귀여운 눈
+      g.fillStyle(0x2c3e50).fillEllipse(26, 38, 5, 8).fillEllipse(38, 38, 5, 8);
+      g.fillStyle(0xffffff).fillCircle(25, 36, 2).fillCircle(37, 36, 2);
+      g.fillStyle(0xff7675, 0.7).fillCircle(19, 42, 3.5).fillCircle(45, 42, 3.5);
+    });
+
+    // 유적 망령 (60 x 60)
+    tex('monster_ghost', 60, 60, g => {
+      g.fillStyle(0x000000, 0.2).fillEllipse(30, 56, 40, 6);
+      g.fillStyle(0x6c5ce7, 0.3).fillCircle(30, 28, 26);
+      g.fillStyle(0xa29bfe).fillRoundedRect(10, 8, 40, 44, { tl: 20, tr: 20, bl: 6, br: 6 });
+      g.fillStyle(0x6c5ce7).fillTriangle(14, 50, 22, 58, 28, 50);
+      g.fillStyle(0x6c5ce7).fillTriangle(32, 50, 38, 58, 44, 50);
+      // 신비로운 푸른 눈
+      g.fillStyle(0x00cec9).fillCircle(22, 26, 6).fillCircle(38, 26, 6);
+      g.fillStyle(0xffffff).fillCircle(22, 24, 2.5).fillCircle(38, 24, 2.5);
+    });
+
+    // 그림자 야수 (66 x 56)
+    tex('monster_shadow', 66, 56, g => {
+      g.fillStyle(0x000000, 0.3).fillEllipse(33, 52, 52, 8);
+      g.fillStyle(0x2d3436).fillRoundedRect(8, 14, 50, 38, 14);
+      // 늑대 귀
+      g.fillStyle(0x636e72).fillTriangle(14, 16, 8, 2, 24, 12);
+      g.fillStyle(0x636e72).fillTriangle(52, 16, 58, 2, 42, 12);
+      // 붉은 안광
+      g.fillStyle(0xff4757).fillEllipse(22, 28, 7, 5).fillEllipse(44, 28, 7, 5);
+      g.fillStyle(0xffffff).fillCircle(22, 28, 2).fillCircle(44, 28, 2);
+      // 송곳니
+      g.fillStyle(0xffffff).fillTriangle(28, 38, 31, 45, 34, 38).fillTriangle(32, 38, 35, 45, 38, 38);
+    });
+
+    // [보스] 토끼 장군 (84 x 92)
+    tex('monster_boss_rabbit', 84, 92, g => {
+      // 보스 금빛 오라
+      g.fillStyle(0xf1c40f, 0.25).fillCircle(42, 46, 42);
+      g.fillStyle(0x000000, 0.35).fillEllipse(42, 86, 64, 10);
+      // 토끼 귀 (장군 투구 장식)
+      g.fillStyle(0xffffff).fillRoundedRect(22, 2, 12, 34, 6).fillRoundedRect(50, 2, 12, 34, 6);
+      g.fillStyle(0xff7675).fillRoundedRect(25, 8, 6, 24, 3).fillRoundedRect(53, 8, 6, 24, 3);
+      // 장군 황금 투구
+      g.fillStyle(0xf39c12).fillRoundedRect(18, 26, 48, 22, 8);
+      g.fillStyle(0xe74c3c).fillCircle(42, 28, 7); // 이마 루비 보석
+      // 얼굴 & 볼
+      g.fillStyle(0xffffff).fillRoundedRect(16, 40, 52, 36, 16);
+      g.fillStyle(0xff7675, 0.5).fillCircle(24, 60, 6).fillCircle(60, 60, 6);
+      // 결연한 눈 & 눈썹
+      g.fillStyle(0x2c3e50).fillCircle(30, 52, 5).fillCircle(54, 52, 5);
+      g.fillStyle(0xffffff).fillCircle(29, 50, 2).fillCircle(53, 50, 2);
+      g.lineStyle(2, 0xd63031).lineBetween(24, 46, 35, 49).lineBetween(60, 46, 49, 49);
+      // 장군 갑주
+      g.fillStyle(0xd63031).fillRoundedRect(20, 68, 44, 20, 4);
+      g.fillStyle(0xf1c40f).fillRect(20, 76, 44, 4);
+      // 당근 대검 장식
+      g.fillStyle(0xe67e22).fillTriangle(70, 42, 82, 80, 74, 80);
+      g.fillStyle(0x2ecc71).fillRect(74, 34, 6, 10);
+    });
+
+    // 고대 토우 병사 (64 x 68)
+    tex('monster_clay_soldier', 64, 68, g => {
+      g.fillStyle(0x000000, 0.3).fillEllipse(32, 64, 46, 8);
+      // 점토 갑옷
+      g.fillStyle(0x795548).fillRoundedRect(16, 24, 32, 38, 6);
+      g.fillStyle(0x8d6e63).fillRoundedRect(14, 10, 36, 22, 6);
+      // 고대 투구 챙
+      g.fillStyle(0x5d4037).fillRect(10, 22, 44, 6);
+      // 형광빛 눈 (침식에 깨어난 영혼)
+      g.fillStyle(0x00e676).fillRect(22, 18, 6, 4).fillRect(36, 18, 6, 4);
+      // 청동 창
+      g.fillStyle(0xa1887f).fillRect(50, 10, 4, 54);
+      g.fillStyle(0x26a69a).fillTriangle(52, 0, 47, 14, 57, 14);
+    });
+
+    // 유적 박쥐 (68 x 48)
+    tex('monster_ruin_bat', 68, 48, g => {
+      // 박쥐 날개
+      g.fillStyle(0x4a148c).fillTriangle(2, 24, 24, 6, 26, 36);
+      g.fillStyle(0x4a148c).fillTriangle(66, 24, 44, 6, 42, 36);
+      g.fillStyle(0x6a1b9a).fillCircle(14, 22, 10).fillCircle(54, 22, 10);
+      // 몸통 & 귀
+      g.fillStyle(0x311b92).fillEllipse(34, 26, 22, 26);
+      g.fillStyle(0xb388ff).fillTriangle(27, 14, 23, 2, 31, 12).fillTriangle(41, 14, 45, 2, 37, 12);
+      // 붉은 눈
+      g.fillStyle(0xff1744).fillCircle(30, 24, 3).fillCircle(38, 24, 3);
+    });
+
+    // 침식 껍질 달팽이 (74 x 62)
+    tex('monster_shell_snail', 74, 62, g => {
+      g.fillStyle(0x000000, 0.3).fillEllipse(37, 58, 60, 8);
+      // 바닥 연체 몸통
+      g.fillStyle(0xa5d6a7).fillRoundedRect(8, 42, 54, 16, 8);
+      // 더듬이 & 눈
+      g.lineStyle(2, 0x81c784).lineBetween(54, 44, 64, 32).lineBetween(58, 46, 68, 38);
+      g.fillStyle(0x1b5e20).fillCircle(65, 32, 4).fillCircle(69, 38, 4);
+      // 거대 소라 껍질 (침식된 보랏빛 고대 껍질)
+      g.fillStyle(0x4a148c).fillCircle(30, 32, 24);
+      g.fillStyle(0x7b1fa2).fillCircle(30, 32, 18);
+      g.fillStyle(0xba68c8).fillCircle(30, 32, 11);
+      g.fillStyle(0x00e5ff, 0.8).fillCircle(30, 32, 5); // 껍질 중앙 룬 코어
+    });
+
+    // 침식 진흙괴 (68 x 56)
+    tex('monster_mud_spitter', 68, 56, g => {
+      g.fillStyle(0x000000, 0.3).fillEllipse(34, 52, 56, 8);
+      // 끈적이는 진흙 몸체
+      g.fillStyle(0x3e2723).fillRoundedRect(6, 16, 56, 36, { tl: 22, tr: 26, bl: 10, br: 10 });
+      g.fillStyle(0x4e342e).fillCircle(20, 24, 14).fillCircle(48, 24, 16);
+      // 독액 거품
+      g.fillStyle(0x76ff03, 0.8).fillCircle(16, 12, 6).fillCircle(50, 10, 8).fillCircle(34, 6, 5);
+      // 맹독 눈 & 큰 입
+      g.fillStyle(0xccff90).fillCircle(24, 28, 6).fillCircle(44, 28, 6);
+      g.fillStyle(0x1b5e20).fillCircle(24, 28, 3).fillCircle(44, 28, 3);
+      g.fillStyle(0x00e676).fillEllipse(34, 40, 18, 8); // 진흙 뿜는 입
+    });
+
+    // [정예] 고대 석상 골렘 (88 x 96)
+    tex('monster_golem_elite', 88, 96, g => {
+      g.fillStyle(0x000000, 0.4).fillEllipse(44, 90, 72, 12);
+      // 웅장한 바위 몸체
+      g.fillStyle(0x37474f).fillRoundedRect(14, 26, 60, 60, 10);
+      g.fillStyle(0x455a64).fillRoundedRect(10, 14, 68, 24, 8); // 거대 어깨
+      // 바위 팔
+      g.fillStyle(0x263238).fillRoundedRect(4, 34, 16, 44, 6).fillRoundedRect(68, 34, 16, 44, 6);
+      // 가슴의 신비로운 에인션트 룬 코어
+      g.fillStyle(0x00bcd4).fillCircle(44, 54, 12);
+      g.fillStyle(0xe0f7fa).fillCircle(44, 54, 6);
+      // 붉은 안광
+      g.fillStyle(0xff1744).fillRect(30, 24, 8, 4).fillRect(50, 24, 8, 4);
+    });
+
+    // [대보스] 달팽이 사오정 장군 (110 x 110)
+    tex('monster_boss_saojung', 110, 110, g => {
+      // 대보스 암흑 폭풍 오라
+      g.fillStyle(0x4a148c, 0.35).fillCircle(55, 55, 54);
+      g.fillStyle(0x000000, 0.5).fillEllipse(55, 102, 90, 14);
+      // 거대한 고대 침식 달팽이 소라 껍질 (가시 달린 외골격)
+      g.fillStyle(0x1a237e).fillCircle(42, 48, 38);
+      g.fillStyle(0x311b92).fillCircle(42, 48, 28);
+      g.fillStyle(0x7b1fa2).fillCircle(42, 48, 18);
+      // 황금 가시 돌기
+      g.fillStyle(0xffd700).fillTriangle(20, 16, 8, 2, 28, 12);
+      g.fillStyle(0xffd700).fillTriangle(50, 12, 54, 0, 62, 14);
+      g.fillStyle(0xffd700).fillTriangle(8, 44, 0, 36, 12, 54);
+      // 사오정 본체 (장군 투구 & 해골 염주 목걸이)
+      g.fillStyle(0x26a69a).fillRoundedRect(52, 42, 46, 52, 14);
+      // 사오정 해골 염주 (목걸이 구슬들)
+      for (let i = 0; i < 5; i++) {
+        g.fillStyle(0xffffff).fillCircle(62 + i * 7, 72, 4);
+        g.fillStyle(0x000000).fillCircle(62 + i * 7, 72, 1.5);
+      }
+      // 삼지창 / 무기
+      g.fillStyle(0x78909c).fillRect(96, 12, 6, 88);
+      g.fillStyle(0xffd700).fillTriangle(99, 0, 92, 18, 106, 18);
+      // 형광빛 보스 안광
+      g.fillStyle(0xffeb3b).fillEllipse(70, 56, 8, 6).fillEllipse(86, 56, 8, 6);
+      g.fillStyle(0xd50000).fillCircle(70, 56, 3).fillCircle(86, 56, 3);
+      // 사오정 특유의 입
+      g.fillStyle(0x004d40).fillEllipse(78, 66, 12, 5);
     });
 
     // 메이플스토리 뇌전/일비 표창 스타일 (44 x 44)

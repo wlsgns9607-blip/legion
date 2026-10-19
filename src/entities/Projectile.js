@@ -51,6 +51,10 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.currentAngle = 0;
     this.currentSpeed = 0;
 
+    // 표창 재생성 쿨타임 (10초 이내 신속 복귀를 위한 최대 수명 2.4초 설정)
+    this.spawnTime = (scene && scene.time) ? scene.time.now : 0;
+    this.maxLifespan = 2400;
+
     // 공중 부유 오라 링
     this.aura = scene.add.sprite(x, y, 'aura_ring')
       .setDepth(11)
@@ -65,6 +69,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
   }
 
   launchAngle(angleRad, baseDamage, dir = 1, customSpeed = null) {
+    this.spawnTime = (this.scene && this.scene.time) ? this.scene.time.now : 0;
     this.dir = dir >= 0 ? 1 : -1;
     this.damage = Math.round(baseDamage * this.cfg.damageMult);
     this.state = WEAPON_STATE.FLYING;
@@ -318,9 +323,8 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.angle = Math.sin(elapsed * 0.004) * 8; // 쿠나이 미세 진동
       }
 
-      // 최대 유지 시간 초과 시 자동 회수 또는 안전 삭제
-      if (elapsed > PSYCHOKINESIS.maxSuspendTime) {
-        this.suspend();
+      // 최대 대기 시간 초과 시 안전 삭제 (2초 후 자동 회수)
+      if (elapsed > 2000) {
         this.safeDestroy();
         return;
       }
@@ -331,6 +335,12 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
 
     // 3. 비행 (FLYING) 또는 궤적 변경 (REPOSITIONING)
     if (this.state === WEAPON_STATE.FLYING || this.state === WEAPON_STATE.REPOSITIONING) {
+      // 2.4초 이상 비행 시 자동 소멸 (10초 이내 표창 4기 리필 완벽 보장)
+      if (time - this.spawnTime > this.maxLifespan) {
+        this.safeDestroy();
+        return;
+      }
+
       if (this.weaponType === 'shuriken') {
         this.angle += 35;
       } else {
@@ -340,11 +350,10 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
       this.updateTrail(time);
       this.updateAuraPos();
 
-      // 맵 경계 체크: 벽이나 화면 밖으로 나가면 경계에서 SUSPENDED로 대기
+      // 맵 경계 체크: 벽이나 화면 밖으로 나가면 즉시 안전 삭제하여 플레이어에게 즉시 반환!
       if (this.x <= 20 || this.x >= mapWidth - 20 || this.y <= 20 || this.y >= GAME.groundY + 10) {
-        this.x = Phaser.Math.Clamp(this.x, 24, mapWidth - 24);
-        this.y = Phaser.Math.Clamp(this.y, 24, GAME.groundY);
-        this.suspend();
+        this.safeDestroy();
+        return;
       }
     }
   }

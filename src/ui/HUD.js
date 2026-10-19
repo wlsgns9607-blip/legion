@@ -40,8 +40,8 @@ export default class HUD {
     this.questTitle = fix(scene.add.text(GAME.width - 20, 64, '', { ...st, fontSize: '11px', color: '#ffd166', fontStyle: 'bold' }).setOrigin(1, 0));
     this.questProgress = fix(scene.add.text(GAME.width - 20, 82, '', { ...st, fontSize: '11px', color: '#55efc4' }).setOrigin(1, 0));
     
-    // 하단 조작 가이드
-    this.guideText = fix(scene.add.text(12, GAME.height - 24, '[1/2/3]: 전직(30Lv 2차, 60Lv 3차) | [X]: 점프 | [Ctrl]: 기본공격 | [A]: 바람스킬(쿨10초) | [Z]: 꽂힌무기 회수 | [Space]: NPC 대화', { ...st, fontSize: '12px', color: '#f1f2f6' }));
+    // 하단 조작 가이드 (최대 70레벨 사양)
+    this.guideText = fix(scene.add.text(12, GAME.height - 24, '[1/2/3]: 전직(Lv.30 2차, Lv.70 3차 대장군) | [X]: 점프 | [Ctrl]: 기본공격 | [A]: 바람스킬(쿨10초) | [Z]: 무기회수(2차~) | [Space]: 대화/포탈', { ...st, fontSize: '12px', color: '#f1f2f6' }));
     
     this.death = fix(scene.add.text(GAME.width / 2, GAME.height / 2, '쓰러졌습니다\n잠시 후 부활합니다',
       { ...st, fontSize: '32px', align: 'center', color: '#ff6b6b' }).setOrigin(0.5)).setVisible(false);
@@ -61,9 +61,9 @@ export default class HUD {
 
     const tier = player.jobTier || 1;
     let tierName = '';
-    if (tier === 1) tierName = `1차: 시노비 (30Lv 2차 전직)`;
-    else if (tier === 2) tierName = `2차: 듀얼시노비 (60Lv 3차 전직)`;
-    else tierName = `3차: 풍마거검사 (최고 차수)`;
+    if (tier === 1) tierName = `1차: 시노비 (Lv.30 2차 전직)`;
+    else if (tier === 2) tierName = `2차: 듀얼시노비 (Lv.70 3차 전직)`;
+    else tierName = `3차: 풍마대장군 (최고 차수)`;
 
     const tierColor = tier === 1 ? '#00d2d3' : (tier === 2 ? '#feca57' : '#ff4757');
     this.tierBadge.setText(tierName).setColor(tierColor);
@@ -128,7 +128,7 @@ export default class HUD {
       } else if (activeWeapons.length > 0) {
         this.telekenesisBadge.setText(`공중 무기 ${activeWeapons.length}기 대기 중 (Shift 누르면 조종, Z 회수)`).setColor('#7ee8fa').setVisible(true);
       } else {
-        this.telekenesisBadge.setText('30Lv 달성 시 2차, 60Lv 달성 시 3차 전직 (1/2/3키 테스트 가능)').setColor('#a4b0be').setVisible(true);
+        this.telekenesisBadge.setText('Lv.30 2차 듀얼시노비, Lv.70 3차 풍마대장군 전직 (1/2/3키 테스트 가능)').setColor('#a4b0be').setVisible(true);
       }
     }
   }

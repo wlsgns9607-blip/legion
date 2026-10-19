@@ -53,10 +53,10 @@ export default class GameScene extends Phaser.Scene {
 
     this.maps.restoreState();                 // 이전 맵의 레벨/경험치/HP/MP/처치 수/차수/퀘스트 복원
 
-    // 맵별 몬스터 배치 (마을에는 몬스터 없음, 나머지 4개 맵만 배치)
+    // 맵별 몬스터 배치 (마을에는 몬스터 없음, 나머지 맵별 배치)
     this.monsters = this.physics.add.group({ runChildUpdate: true });
     if (map.monsters && map.monsters.length > 0) {
-      map.monsters.forEach(m => this.monsters.add(new Monster(this, m.x, m.y ?? GY - 40, this.player)));
+      map.monsters.forEach(m => this.monsters.add(new Monster(this, m.x, m.y ?? GY - 40, this.player, m.type)));
     }
 
     // 마을 NPC 생성 (장로 타키)
@@ -80,7 +80,15 @@ export default class GameScene extends Phaser.Scene {
       this.xp.addExp(m.exp);
       this.combat.floatText(m.x, m.y - 30, `+${m.exp} EXP`, '#7ec8ff', 14);
       this.spawnPotions(m.x, m.y);
-      this.time.delayedCall(MONSTER.respawnMs, () => m.respawn());
+
+      // 보스 처치 특별 연출
+      if (m.isBoss) {
+        this.cameras.main.flash(400, 255, 215, 0);
+        this.combat.floatText(this.player.x, this.player.y - 80, `★ [보스 토벌 성공] ${m.cfg.name}! ★`, '#ffd700', 22);
+      }
+
+      const respawnTime = m.cfg?.respawnMs || MONSTER.respawnMs;
+      this.time.delayedCall(respawnTime, () => m.respawn());
 
       // [퀘스트 1]: 맵 1(초록 숲/map02)의 몬스터 30마리 처치 카운트
       if (this.maps.map.id === 'map02' && this.quest.status === 'IN_PROGRESS') {
@@ -186,9 +194,20 @@ export default class GameScene extends Phaser.Scene {
     if (user.quest_status) this.quest.status = user.quest_status;
     if (user.quest_kills !== undefined) this.quest.kills = user.quest_kills;
 
+    // 메이플 감성 커스텀 외형 (닉네임, 칭호, 도복 색상, 주무기) 적용
+    if (this.player && this.player.setCustomAppearance) {
+      this.player.setCustomAppearance(
+        user.nickname,
+        user.title,
+        user.color_theme || user.colorTheme || 'default',
+        user.selected_weapon || user.selectedWeapon || 'shuriken'
+      );
+    }
+
     this.updateQuestBubble();
     if (showNotice && this.combat) {
-      this.combat.floatText(this.player.x, this.player.y - 65, `★ 로그인 완료! [${user.nickname}] 스킬 활성화! ★`, '#ffd32a', 20);
+      const titleStr = user.title ? `[${user.title}] ` : '';
+      this.combat.floatText(this.player.x, this.player.y - 65, `★ ${titleStr}${user.nickname} 접속 완료! ★`, '#ffd32a', 20);
     }
   }
 

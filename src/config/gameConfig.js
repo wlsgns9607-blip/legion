@@ -3,19 +3,20 @@ export const GAME = { width: 960, height: 540, worldWidth: 2400, groundY: 480, g
 
 export const PLAYER = {
   maxHp: 200, maxMp: 200, speed: 220, jump: -520,
-  damage: 15, attackInterval: 300,     // ms
+  damage: 15, attackInterval: 360,     // 투척 리듬감을 위한 적정 간격 (ms)
   shurikenMpCost: 0,                   // 1레벨 테스트를 위해 MP 소모 없음
   invulnMs: 1000, stunMs: 250,
-  shurikenSpeed: 640, shurikenRange: 520
+  shurikenSpeed: 400, shurikenRange: 520, // 중간 속도로 조율 (너무 빠르지 않음)
+  maxActiveWeapons: 4                  // 밸런스 조정: 필드 동시 비행/조정 가능 표창 최대 4개 제한
 };
 
-// 시노비 염동력 무기 시스템 설정
+// 시노비 염동력 무기 시스템 설정 (중간 속도 & 부드러운 유선형 제어)
 export const PSYCHOKINESIS = {
   shuriken: {
     name: '표창',
-    speed: 620,
-    controlSpeed: 420,
-    turnRate: 0.12,          // 회전 보간 속도
+    speed: 400,              // 중간 비행 속도 (기존 620에서 하향)
+    controlSpeed: 240,       // 중간 조종 속도 (기존 420에서 안정적인 240으로 조율)
+    turnRate: 0.08,          // 부드러운 회전 보간 속도
     damageMult: 1.0,         // 데미지 배율
     hitCooldown: 300,        // 동일 대상 재타격 간격 (ms)
     mpCost: 0,
@@ -26,9 +27,9 @@ export const PSYCHOKINESIS = {
   },
   kunai: {
     name: '쿠나이',
-    speed: 480,
-    controlSpeed: 320,
-    turnRate: 0.08,
+    speed: 350,              // 묵직한 중간 속도
+    controlSpeed: 210,       // 안정적인 조종 속도
+    turnRate: 0.06,
     damageMult: 1.6,         // 묵직하고 강한 공격력
     hitCooldown: 400,
     mpCost: 0,
@@ -39,9 +40,9 @@ export const PSYCHOKINESIS = {
   },
   wind_shuriken: {
     name: '바람 표창',
-    speed: 700,
-    controlSpeed: 450,
-    turnRate: 0.15,
+    speed: 480,              // 질풍 중간 속도
+    controlSpeed: 280,
+    turnRate: 0.10,
     damageMult: 3.0,         // 4명 몬스터 섬멸용 강력한 바람 데미지
     hitCooldown: 200,
     mpCost: 0,
@@ -52,9 +53,9 @@ export const PSYCHOKINESIS = {
   },
   wind_kunai: {
     name: '바람 쿠나이',
-    speed: 650,
-    controlSpeed: 400,
-    turnRate: 0.12,
+    speed: 440,
+    controlSpeed: 260,
+    turnRate: 0.08,
     damageMult: 3.5,
     hitCooldown: 250,
     mpCost: 0,
@@ -122,12 +123,12 @@ export const TIERS = {
   },
   3: {
     tier: 3,
-    reqLevel: 60,           // 60레벨 3차 전직
-    title: '3차: 풍마거검사 (거대 쿠나이/표창)',
+    reqLevel: 70,           // 70레벨 전직 (최종 대장군)
+    title: '3차: 풍마대장군 (거대 쿠나이/대형 풍마표창)',
     allowedWeapons: ['shuriken', 'kunai', 'big_shuriken', 'big_kunai'],
-    maxHits: 6,             // 3차: 광역 다단 관통
+    maxHits: 5,             // 3차: 최대 5인 동시 타격
     canPinAndRecall: true,
-    desc: '3차 (Lv.60+): 거대한 쿠나이와 풍마표창을 전개하여 사방을 초토화합니다.'
+    desc: '3차 (Lv.70): 거대한 풍마표창과 쿠나이를 전개하여 최대 5인을 동시 섬멸합니다.'
   }
 };
 
@@ -151,19 +152,81 @@ export const QUEST_CONFIG = {
 export const MONSTER = {
   hp: 40, speed: 70, contactDamage: 10, exp: 12,
   aggroRange: 420, stopRange: 24, respawnMs: 4000,
-  spawnXs: [500, 800, 1200, 1600, 2000]   // (구버전 단일 맵용) 현재 맵별 배치는 config/maps.js 의 monsters 사용
+  spawnXs: [500, 800, 1200, 1600, 2000]
+};
+
+// Lv.1 ~ Lv.70 몬스터별 정량 데이터 시트
+export const MONSTER_TYPES = {
+  normal: {
+    name: '포동 슬라임',
+    hp: 40, speed: 70, contactDamage: 10, exp: 12,
+    texture: 'monster', scale: 1.0, respawnMs: 4000
+  },
+  mushroom: {
+    name: '버섯 포자몬',
+    hp: 85, speed: 75, contactDamage: 14, exp: 22,
+    texture: 'monster_mushroom', scale: 1.05, respawnMs: 4200
+  },
+  ruin_ghost: {
+    name: '유적 망령',
+    hp: 150, speed: 80, contactDamage: 18, exp: 35,
+    texture: 'monster_ghost', scale: 1.1, respawnMs: 4500
+  },
+  shadow_beast: {
+    name: '그림자 야수',
+    hp: 240, speed: 95, contactDamage: 24, exp: 50,
+    texture: 'monster_shadow', scale: 1.15, respawnMs: 4800
+  },
+  boss_rabbit: {
+    name: '[보스] 토끼 장군',
+    hp: 3500, speed: 110, contactDamage: 40, exp: 1200,
+    texture: 'monster_boss_rabbit', scale: 1.6, respawnMs: 15000,
+    isBoss: true, title: '달빛 제단의 수호자'
+  },
+  clay_soldier: {
+    name: '고대 토우 병사',
+    hp: 360, speed: 80, contactDamage: 28, exp: 75,
+    texture: 'monster_clay_soldier', scale: 1.1, respawnMs: 4200
+  },
+  ruin_bat: {
+    name: '유적 동굴 박쥐',
+    hp: 260, speed: 125, contactDamage: 32, exp: 85,
+    texture: 'monster_ruin_bat', scale: 1.0, fly: true, respawnMs: 4000
+  },
+  shell_snail: {
+    name: '침식 껍질 달팽이',
+    hp: 750, speed: 65, contactDamage: 36, exp: 160,
+    texture: 'monster_shell_snail', scale: 1.25, respawnMs: 4500
+  },
+  mud_spitter: {
+    name: '침식 진흙괴',
+    hp: 580, speed: 85, contactDamage: 42, exp: 180,
+    texture: 'monster_mud_spitter', scale: 1.2, respawnMs: 4500
+  },
+  golem_elite: {
+    name: '[정예] 고대 석상 골렘',
+    hp: 1800, speed: 60, contactDamage: 55, exp: 500,
+    texture: 'monster_golem_elite', scale: 1.5, respawnMs: 8000,
+    isElite: true
+  },
+  boss_saojung: {
+    name: '[대보스] 달팽이 사오정 장군',
+    hp: 15000, speed: 95, contactDamage: 75, exp: 8000,
+    texture: 'monster_boss_saojung', scale: 2.1, respawnMs: 25000,
+    isBoss: true, title: '침식의 군주'
+  }
 };
 
 export const POTION = {
-  hpHeal: 35,
-  mpHeal: 30,
+  hpHeal: 50,
+  mpHeal: 40,
   dropChanceHp: 0.7,
   dropChanceMp: 0.7
 };
 
 export const LEVEL = {
-  maxLevel: 120,
-  baseExp: 15, growth: 1.5,            // 요구 경험치 = baseExp * level^growth (테스트용으로 낮음)
-  hpPerLevel: 10, mpPerLevel: 8, damagePerLevel: 2
+  maxLevel: 70,                        // 최대 70레벨 확장 (Lv.70 결전 및 대장군 전직)
+  baseExp: 18, growth: 1.45,           // 70레벨까지 호쾌하고 몰입감 있는 레벨업 곡선
+  hpPerLevel: 14, mpPerLevel: 10, damagePerLevel: 3
 };
 

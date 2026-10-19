@@ -43,6 +43,35 @@ const DECOR = {
       .lineBetween(x, y - 70, x + 45, y - 110)
       .lineBetween(x - 25, y - 112, x - 40, y - 150);
     g.fillStyle(0xb8a9ff, 0.25).fillCircle(x + 30, y - 170, 14);
+  },
+  altar(g, x, y, i) {
+    // 고대 제단 석조 토템 & 신비로운 룬 화로
+    g.fillStyle(0x3d314a).fillRect(x - 18, y - 90, 36, 90);
+    g.fillStyle(0x564368).fillRect(x - 26, y - 105, 52, 15);
+    g.fillStyle(0x281e33).fillRect(x - 24, y - 16, 48, 16);
+    // 푸른/보랏빛 영혼의 불꽃 화로
+    g.fillStyle(0x9b59b6, 0.4).fillCircle(x, y - 120, 20);
+    g.fillStyle(0x00d2d3).fillTriangle(x - 10, y - 105, x + 10, y - 105, x, y - 135);
+    g.fillStyle(0xffffff, 0.8).fillCircle(x, y - 115, 5);
+  },
+  slime_shrine(g, x, y, i) {
+    // 침식된 형광 점액 수정석
+    g.fillStyle(0x1a3329).fillRect(x - 14, y - 75, 28, 75);
+    g.fillStyle(0x1dd1a1, 0.35).fillCircle(x, y - 85, 26);
+    g.fillStyle(0x10ac84).fillPoints([
+      { x: x, y: y - 120 }, { x: x + 18, y: y - 75 },
+      { x: x, y: y - 60 }, { x: x - 18, y: y - 75 }
+    ], true);
+    g.fillStyle(0x55efc4).fillCircle(x + 4, y - 90, 4).fillCircle(x - 5, y - 75, 3);
+  },
+  boss_throne(g, x, y, i) {
+    // 결전지 웅장한 보스 첨탑 기둥 & 침식 룬 깃발
+    g.fillStyle(0x1b0826).fillRect(x - 22, y - 160, 44, 160);
+    g.fillStyle(0x3a1250).fillRect(x - 30, y - 175, 60, 18);
+    g.fillStyle(0x6c1d8a).fillTriangle(x - 20, y - 175, x + 20, y - 175, x, y - 210);
+    // 붉은 결계 룬 안광
+    g.fillStyle(0xff4757, 0.8).fillCircle(x, y - 120, 6);
+    g.fillStyle(0xff6b81, 0.3).fillCircle(x, y - 120, 16);
   }
 };
 

@@ -9,7 +9,7 @@
     html, body {
       margin: 0;
       height: 100%;
-      background: #0f121d;
+      background: #090c14;
       overflow: hidden;
       font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
       user-select: none;
@@ -36,39 +36,49 @@
       display: none;
       align-items: center;
       gap: 10px;
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(8px);
-      padding: 6px 14px;
+      padding: 6px 16px;
       border-radius: 20px;
-      border: 1px solid rgba(255, 215, 0, 0.35);
+      border: 1px solid rgba(255, 215, 0, 0.4);
       color: #fff;
       font-size: 13px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    }
+    #userBar .channel-tag {
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
     }
     #userBar .nick { color: #feca57; font-weight: bold; }
     #userBar button {
       background: #222f3e;
       color: #c8d6e5;
       border: 1px solid #576574;
-      padding: 3px 9px;
+      padding: 4px 10px;
       border-radius: 12px;
       cursor: pointer;
       font-size: 11px;
       transition: all 0.2s;
     }
     #userBar button:hover { background: #341f97; color: #fff; border-color: #5f27cd; }
+    #userBar button.channel-btn { background: #2e86de; color: #fff; border-color: #54a0ff; }
+    #userBar button.channel-btn:hover { background: #0984e3; }
     #userBar button.save-btn { background: #10ac84; color: #fff; border-color: #1dd1a1; }
     #userBar button.save-btn:hover { background: #01a3a4; }
 
-    /* 로그인 & 회원가입 모달 오버레이 */
+    /* 메이플 스타일 풀스크린 오버레이 */
     #authOverlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(8, 11, 20, 0.82);
-      backdrop-filter: blur(10px);
+      background: radial-gradient(circle at center, rgba(16, 22, 38, 0.88) 0%, rgba(6, 9, 16, 0.96) 100%);
+      backdrop-filter: blur(12px);
       z-index: 1000;
       display: flex;
       align-items: center;
@@ -76,6 +86,23 @@
       transition: opacity 0.35s ease;
     }
 
+    /* 공통 뷰 컨테이너 */
+    .view-screen {
+      display: none;
+      animation: modalPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    .view-screen.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.92) translateY(15px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* 1. 로그인 & 회원가입 모달 */
     .auth-modal {
       width: 440px;
       background: linear-gradient(145deg, #182033, #0f1422);
@@ -85,14 +112,7 @@
       padding: 28px 32px 32px;
       color: #fff;
       position: relative;
-      animation: modalPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
     }
-
-    @keyframes modalPop {
-      0% { opacity: 0; transform: scale(0.9) translateY(20px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
     .auth-header {
       text-align: center;
       margin-bottom: 22px;
@@ -123,7 +143,6 @@
       border: 1px solid rgba(29, 209, 161, 0.3);
     }
 
-    /* 탭 */
     .auth-tabs {
       display: flex;
       gap: 8px;
@@ -150,7 +169,6 @@
       box-shadow: 0 2px 8px rgba(241, 196, 15, 0.4);
     }
 
-    /* 폼 입력 필드 */
     .form-group {
       margin-bottom: 14px;
       text-align: left;
@@ -162,7 +180,7 @@
       margin-bottom: 5px;
       font-weight: 600;
     }
-    .form-group input {
+    .form-group input, .form-group select {
       width: 100%;
       padding: 11px 14px;
       background: #0b0f19;
@@ -173,7 +191,7 @@
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .form-group input:focus {
+    .form-group input:focus, .form-group select:focus {
       border-color: #f1c40f;
       box-shadow: 0 0 10px rgba(241, 196, 15, 0.25);
     }
@@ -222,19 +240,473 @@
       color: #fff;
       background: rgba(255, 255, 255, 0.05);
     }
+
+    /* 2. 메이플 스타일 월드 & 채널 선택 화면 */
+    .maple-panel {
+      width: 820px;
+      max-width: 95vw;
+      background: linear-gradient(180deg, #1b233a 0%, #0d121f 100%);
+      border: 2px solid #f1c40f;
+      border-radius: 20px;
+      box-shadow: 0 0 35px rgba(241, 196, 15, 0.3), 0 25px 60px rgba(0, 0, 0, 0.85);
+      padding: 28px 36px 32px;
+      color: #fff;
+      position: relative;
+    }
+    .maple-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(241, 196, 15, 0.3);
+      padding-bottom: 14px;
+      margin-bottom: 22px;
+    }
+    .maple-title-bar h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffd32a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 1px;
+    }
+    .maple-title-bar .user-welcome {
+      font-size: 13px;
+      color: #a4b0be;
+    }
+    .maple-title-bar .user-welcome span {
+      color: #feca57;
+      font-weight: bold;
+    }
+
+    /* 월드 선택 카드 (그림자) */
+    .world-banner {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: linear-gradient(90deg, rgba(108, 92, 231, 0.35) 0%, rgba(29, 209, 161, 0.15) 100%);
+      border: 1px solid rgba(162, 155, 254, 0.5);
+      border-radius: 14px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .world-emblem {
+      width: 64px;
+      height: 64px;
+      background: radial-gradient(circle, #341f97 0%, #1e1548 100%);
+      border: 2px solid #ffd32a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 0 18px rgba(255, 211, 42, 0.5);
+      flex-shrink: 0;
+    }
+    .world-info { flex: 1; }
+    .world-info h3 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .world-info h3 .badge {
+      font-size: 11px;
+      background: #10ac84;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 8px;
+    }
+    .world-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #ced6e0;
+    }
+
+    /* 채널 선택 그리드 */
+    .channel-section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #ffd32a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .channel-card {
+      background: rgba(11, 15, 25, 0.85);
+      border: 1px solid rgba(87, 101, 116, 0.4);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .channel-card .ch-num {
+      font-size: 15px;
+      font-weight: 800;
+      color: #dfe4ea;
+    }
+    .channel-card .ch-status {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+    }
+    .channel-card .traffic-bar {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .channel-card .traffic-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    /* 채널 1 전용 (활성화 & 클릭 가능) */
+    .channel-card.active-ch {
+      background: linear-gradient(145deg, rgba(46, 213, 115, 0.18), rgba(11, 15, 25, 0.9));
+      border: 2px solid #2ed573;
+      box-shadow: 0 0 16px rgba(46, 213, 115, 0.35);
+      cursor: pointer;
+    }
+    .channel-card.active-ch:hover {
+      transform: translateY(-4px) scale(1.04);
+      border-color: #ffd32a;
+      box-shadow: 0 6px 24px rgba(255, 211, 42, 0.55);
+      background: linear-gradient(145deg, rgba(255, 211, 42, 0.25), rgba(11, 15, 25, 0.95));
+    }
+    .channel-card.active-ch .ch-num { color: #ffd32a; }
+    .channel-card.active-ch .ch-status {
+      background: rgba(46, 213, 115, 0.25);
+      color: #2ed573;
+      border: 1px solid #2ed573;
+    }
+    .channel-card.active-ch .traffic-fill {
+      width: 32%;
+      background: #2ed573;
+    }
+
+    /* 비활성 채널 (채널 2~10) */
+    .channel-card.disabled-ch {
+      opacity: 0.65;
+      cursor: not-allowed;
+      border-color: rgba(255, 71, 87, 0.3);
+    }
+    .channel-card.disabled-ch:hover {
+      border-color: #ff4757;
+      background: rgba(255, 71, 87, 0.08);
+      transform: translateY(-1px);
+    }
+    .channel-card.disabled-ch .ch-status {
+      background: rgba(255, 71, 87, 0.2);
+      color: #ff6b81;
+      border: 1px solid rgba(255, 71, 87, 0.4);
+    }
+    .channel-card.disabled-ch .traffic-fill {
+      width: 95%;
+      background: #ff4757;
+    }
+
+    .panel-footer-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-secondary {
+      background: #2f3542;
+      color: #ced6e0;
+      border: 1px solid #57606f;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: #57606f;
+      color: #fff;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f1c40f, #e67e22);
+      color: #1e272e;
+      border: none;
+      padding: 11px 26px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(241, 196, 15, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #feca57, #ff9f43);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 18px rgba(241, 196, 15, 0.5);
+    }
+
+    /* 3. 캐릭터 선택 & 설정 화면 (메이플 스타일) */
+    .char-lobby-container {
+      display: flex;
+      gap: 22px;
+      margin-bottom: 24px;
+    }
+    .char-slots-list {
+      flex: 1;
+      display: flex;
+      gap: 16px;
+    }
+    .char-card-slot {
+      flex: 1;
+      background: rgba(15, 20, 35, 0.9);
+      border: 2px solid #3742fa;
+      border-radius: 16px;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      min-height: 330px;
+    }
+    .char-card-slot:hover {
+      border-color: #ffd32a;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(255, 211, 42, 0.35);
+    }
+    .char-card-slot.selected {
+      border-color: #ffd32a;
+      background: linear-gradient(180deg, rgba(255, 211, 42, 0.12) 0%, rgba(15, 20, 35, 0.95) 100%);
+      box-shadow: 0 0 24px rgba(255, 211, 42, 0.45);
+    }
+
+    /* 캐릭터 발판 & 도트 아바타 */
+    .char-pedestal {
+      width: 140px;
+      height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .char-avatar-box {
+      width: 72px;
+      height: 96px;
+      position: relative;
+      animation: charIdle 1.8s infinite ease-in-out;
+      transform-origin: bottom center;
+    }
+    @keyframes charIdle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px) scaleY(1.02); }
+    }
+    .pedestal-base {
+      width: 120px;
+      height: 18px;
+      background: radial-gradient(ellipse at center, #70a1ff 0%, #2f3542 70%, transparent 100%);
+      border-radius: 50%;
+      box-shadow: 0 4px 15px rgba(112, 161, 255, 0.4);
+      margin-top: 4px;
+    }
+
+    .char-title-tag {
+      font-size: 11px;
+      color: #ffd32a;
+      font-weight: bold;
+      margin-bottom: 3px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 211, 42, 0.3);
+    }
+    .char-name-tag {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .char-job-badge {
+      font-size: 12px;
+      background: #341f97;
+      color: #00d2d3;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: bold;
+      border: 1px solid #5f27cd;
+      margin-bottom: 10px;
+    }
+    .char-stats-mini {
+      width: 100%;
+      font-size: 11px;
+      color: #a4b0be;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+    }
+    .stat-row b { color: #f1f2f6; }
+
+    /* 빈 슬롯 */
+    .char-card-slot.empty-slot {
+      border: 2px dashed rgba(116, 125, 140, 0.5);
+      background: rgba(11, 15, 25, 0.5);
+      justify-content: center;
+      cursor: pointer;
+    }
+    .char-card-slot.empty-slot:hover {
+      border-color: #70a1ff;
+      background: rgba(112, 161, 255, 0.08);
+    }
+    .empty-plus-icon {
+      font-size: 40px;
+      color: #747d8c;
+      margin-bottom: 8px;
+    }
+    .empty-slot-text {
+      font-size: 13px;
+      color: #a4b0be;
+      font-weight: bold;
+    }
+
+    /* 캐릭터 커스터마이징 모달 */
+    #charConfigModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .config-modal-box {
+      width: 520px;
+      max-width: 92vw;
+      background: linear-gradient(145deg, #182033, #0f1422);
+      border: 2px solid #ffd32a;
+      border-radius: 18px;
+      padding: 26px 30px;
+      box-shadow: 0 0 35px rgba(255, 211, 42, 0.35);
+      color: #fff;
+      animation: modalPop 0.25s ease;
+    }
+    .config-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffd32a;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 211, 42, 0.2);
+      padding-bottom: 10px;
+    }
+    .color-picker-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .color-chip {
+      flex: 1;
+      height: 38px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+      color: #fff;
+      transition: all 0.2s;
+    }
+    .color-chip:hover { transform: scale(1.05); }
+    .color-chip.selected {
+      border-color: #fff;
+      box-shadow: 0 0 12px #fff;
+      transform: scale(1.08);
+    }
+    .chip-black { background: #2f3542; }
+    .chip-blue { background: #3867d6; }
+    .chip-red { background: #eb3b5a; }
+    .chip-yellow { background: #f7b731; color: #1e272e; }
+    .chip-purple { background: #8854d0; }
+
+    /* 토스트 알림창 */
+    #toastAlert {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-30px);
+      background: linear-gradient(90deg, #ff4757, #ff6b81);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 0 6px 20px rgba(255, 71, 87, 0.5);
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+    #toastAlert.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
   <!-- 상단 로그인 계정 바 -->
   <div id="userBar">
+    <span class="channel-tag" id="userChannelDisplay">그림자 1채널</span>
     <span>⚔️ <span class="nick" id="userNickDisplay">모험가</span>님</span>
+    <button class="channel-btn" id="btnSwitchChannel" title="채널 및 캐릭터 선택창으로 이동합니다">🌐 채널 변경</button>
     <button class="save-btn" id="btnManualSave" title="현재 진행 상황을 Python DB에 즉시 저장합니다">💾 DB 저장</button>
     <button id="btnLogout">로그아웃</button>
   </div>
 
-  <!-- 로그인 & 회원가입 모달 -->
+  <!-- 메인 모달 오버레이 (3단계 화면 전환) -->
   <div id="authOverlay">
-    <div class="auth-modal">
+
+    <!-- [화면 1] 로그인 & 회원가입 화면 -->
+    <div class="view-screen auth-modal active" id="viewAuth">
       <div class="auth-header">
         <h1>LEGION : SHINOBI</h1>
         <p>파이썬 SQLite 데이터베이스 연동 시스템</p>
@@ -257,8 +729,8 @@
           <input type="password" id="loginPassword" placeholder="비밀번호 입력" autocomplete="current-password" required />
         </div>
         <div class="auth-msg" id="loginMsg"></div>
-        <button type="submit" class="btn-submit" id="btnLoginSubmit">로그인하여 게임 시작</button>
-        <p style="text-align:center; font-size:12px; color:#feca57; margin: 8px 0 0;">※ 회원가입 또는 로그인해야 캐릭터 스킬과 게임이 작동합니다.</p>
+        <button type="submit" class="btn-submit" id="btnLoginSubmit">로그인하여 채널 선택</button>
+        <p style="text-align:center; font-size:12px; color:#feca57; margin: 8px 0 0;">※ 로그인 후 [그림자] 월드 & 채널 및 캐릭터를 선택할 수 있습니다.</p>
       </form>
 
       <!-- 회원가입 폼 -->
@@ -284,7 +756,194 @@
         <button type="button" class="btn-guest" onclick="switchAuthTab('login')">로그인 화면으로 돌아가기</button>
       </form>
     </div>
+
+    <!-- [화면 2] 메이플 스타일 월드 & 채널 선택 화면 -->
+    <div class="view-screen maple-panel" id="viewWorldChannel">
+      <div class="maple-title-bar">
+        <h2>🌑 월드 & 채널 선택 (World & Channel)</h2>
+        <div class="user-welcome">접속 계정: <span id="worldLoggedNick">진훈</span>님</div>
+      </div>
+
+      <!-- 월드 배너 (그림자) -->
+      <div class="world-banner">
+        <div class="world-emblem">⚔️</div>
+        <div class="world-info">
+          <h3>그림자 (SHADOW) <span class="badge">정상 가동</span></h3>
+          <p>어둠 속에 숨어든 시노비들의 주 무대 · 닌자 액션 RPG 공식 월드</p>
+        </div>
+      </div>
+
+      <div class="channel-section-title">
+        <span>📡 [그림자] 채널 목록 — 입장할 채널을 클릭하세요:</span>
+      </div>
+
+      <!-- 채널 그리드 (채널 1만 클릭 가능, 채널 2~10은 비활성화) -->
+      <div class="channel-grid">
+        <!-- 채널 1 (활성화) -->
+        <div class="channel-card active-ch" id="ch1Card" onclick="selectChannel(1)">
+          <div class="ch-num">그림자 1</div>
+          <span class="ch-status">🟢 원활</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+
+        <!-- 채널 2 ~ 10 (비활성화) -->
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(2)">
+          <div class="ch-num">그림자 2</div>
+          <span class="ch-status">🔴 혼잡</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(3)">
+          <div class="ch-num">그림자 3</div>
+          <span class="ch-status">🔴 혼잡</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(4)">
+          <div class="ch-num">그림자 4</div>
+          <span class="ch-status">🔒 점검중</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(5)">
+          <div class="ch-num">그림자 5</div>
+          <span class="ch-status">🔒 점검중</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(6)">
+          <div class="ch-num">그림자 6</div>
+          <span class="ch-status">🔒 준비중</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(7)">
+          <div class="ch-num">그림자 7</div>
+          <span class="ch-status">🔒 준비중</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(8)">
+          <div class="ch-num">그림자 8</div>
+          <span class="ch-status">🔒 준비중</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(9)">
+          <div class="ch-num">그림자 9</div>
+          <span class="ch-status">🔒 준비중</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(10)">
+          <div class="ch-num">그림자 10</div>
+          <span class="ch-status">🔒 준비중</span>
+          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="panel-footer-actions">
+        <button class="btn-secondary" onclick="switchView('auth')">◀ 계정 변경</button>
+        <span style="font-size: 12px; color: #70a1ff;">※ 현재 테스트 기간 동안 [그림자 1채널]만 개방되어 있습니다.</span>
+        <button class="btn-primary" onclick="selectChannel(1)">그림자 1채널 입장 ▶</button>
+      </div>
+    </div>
+
+    <!-- [화면 3] 메이플 스타일 캐릭터 선택 & 설정 화면 -->
+    <div class="view-screen maple-panel" id="viewCharSelect">
+      <div class="maple-title-bar">
+        <h2>⚔️ 캐릭터 선택 & 설정 — [그림자 1채널]</h2>
+        <div class="user-welcome">선택된 채널: <span style="color:#2ed573;">그림자 1채널</span></div>
+      </div>
+
+      <div class="char-lobby-container">
+        <div class="char-slots-list">
+          <!-- 1번 슬롯: 내 메인 캐릭터 -->
+          <div class="char-card-slot selected" id="slotCardMain" onclick="selectCharSlot(1)">
+            <div class="char-title-tag" id="slotTitleDisplay">[그림자의 계승자]</div>
+            <div class="char-name-tag" id="slotNickDisplay">시노비진훈</div>
+            <div class="char-job-badge" id="slotJobBadge">1차 시노비 (Lv.1)</div>
+
+            <!-- 캐릭터 발판 & 아바타 -->
+            <div class="char-pedestal">
+              <canvas id="charPreviewCanvas" width="56" height="72" style="width:70px; height:90px; image-rendering:pixelated;"></canvas>
+              <div class="pedestal-base"></div>
+            </div>
+
+            <!-- 스탯 요약 -->
+            <div class="char-stats-mini">
+              <div class="stat-row"><span>HP / MP</span><b id="slotHpMpText">200 / 200</b></div>
+              <div class="stat-row"><span>처치 수</span><b id="slotKillsText">0마리</b></div>
+              <div class="stat-row"><span>주무기</span><b id="slotWeaponText">표창 (Shuriken)</b></div>
+            </div>
+          </div>
+
+          <!-- 2번 슬롯: 보조 캐릭터 / 새 캐릭터 생성 슬롯 -->
+          <div class="char-card-slot empty-slot" onclick="openCharConfigModal(true)">
+            <div class="empty-plus-icon">➕</div>
+            <div class="empty-slot-text">새 캐릭터 설정 / 생성</div>
+            <span style="font-size:11px; color:#747d8c; margin-top:4px;">슬롯 추가 가능</span>
+          </div>
+
+          <!-- 3번 슬롯: 빈 슬롯 -->
+          <div class="char-card-slot empty-slot" onclick="openCharConfigModal(true)">
+            <div class="empty-plus-icon">➕</div>
+            <div class="empty-slot-text">비어 있는 슬롯</div>
+            <span style="font-size:11px; color:#747d8c; margin-top:4px;">슬롯 추가 가능</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-footer-actions">
+        <button class="btn-secondary" onclick="switchView('world')">◀ 채널 선택으로</button>
+        <button class="btn-secondary" style="border-color:#ffd32a; color:#ffd32a;" onclick="openCharConfigModal(false)">⚙️ 캐릭터 설정 (외형/칭호/닉네임)</button>
+        <button class="btn-primary" style="font-size: 15px; padding: 12px 32px;" onclick="startGameWithCurrentChar()">⚔️ 게임 시작 (Start Game) ▶</button>
+      </div>
+    </div>
+
   </div>
+
+  <!-- 캐릭터 커스터마이징 설정 모달 -->
+  <div id="charConfigModal">
+    <div class="config-modal-box">
+      <div class="config-title">⚙️ 캐릭터 커스터마이징 & 설정</div>
+
+      <div class="form-group">
+        <label>캐릭터 닉네임</label>
+        <input type="text" id="cfgNickname" placeholder="닉네임 입력" required />
+      </div>
+
+      <div class="form-group">
+        <label>칭호 (Title)</label>
+        <select id="cfgTitle">
+          <option value="초보 시노비">🔰 초보 시노비</option>
+          <option value="그림자의 계승자">🌑 그림자의 계승자</option>
+          <option value="달빛의 암살자">🌙 달빛의 암살자</option>
+          <option value="전설의 풍마">🌪️ 전설의 풍마</option>
+          <option value="초록 숲의 수호자">🌲 초록 숲의 수호자</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>도복 / 의상 컬러 테마</label>
+        <div class="color-picker-group">
+          <div class="color-chip chip-black selected" data-color="default" onclick="selectColorTheme('default', this)">칠흑</div>
+          <div class="color-chip chip-blue" data-color="blue" onclick="selectColorTheme('blue', this)">청람</div>
+          <div class="color-chip chip-red" data-color="red" onclick="selectColorTheme('red', this)">홍련</div>
+          <div class="color-chip chip-yellow" data-color="yellow" onclick="selectColorTheme('yellow', this)">황금</div>
+          <div class="color-chip chip-purple" data-color="purple" onclick="selectColorTheme('purple', this)">심연</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>초기 주무기 성향</label>
+        <select id="cfgWeapon">
+          <option value="shuriken">🌀 표창 (원거리 연사 및 관통)</option>
+          <option value="kunai">🗡️ 쿠나이 (근접 타격 및 몬스터 꽂힘)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn-secondary" style="flex:1;" onclick="closeCharConfigModal()">취소</button>
+        <button type="button" class="btn-primary" style="flex:2;" onclick="saveCharacterConfig()">설정 저장 및 적용</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메이플 스타일 토스트 알림창 -->
+  <div id="toastAlert">현재 [그림자 1채널]만 개방되어 있습니다.</div>
 
   <div id="game"></div>
 
@@ -293,14 +952,149 @@
     const API_URL = isLocal ? 'http://127.0.0.1:8000' : '';
     window.API_URL = API_URL;
     window.currentUser = null;
+    window.currentChannel = 1;
 
-    // [중요] 회원가입 & 로그인 입력창에서 스페이스바, 방향키, 영문/숫자 등 모든 키가 씹히지 않도록 완벽 보장
+    // Web Audio API 메이플스토리 감성 효과음 엔진 (무설치 브라우저 순수 합성기)
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playMapleSfx(type) {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        if (type === 'hover') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (type === 'click') {
+          // 메이플 딸깍 클릭음
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1100, now);
+          osc.frequency.exponentialRampToValueAtTime(550, now + 0.08);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'channel') {
+          // 채널 선택 아르페지오 (C5, E5, G5)
+          [523.25, 659.25, 783.99].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+            gain.gain.setValueAtTime(0.15, now + idx * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.18);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.06);
+            osc.stop(now + idx * 0.06 + 0.18);
+          });
+        } else if (type === 'start') {
+          // 게임 시작 팡파르 (C5 -> G5 -> C6)
+          [523.25, 783.99, 1046.50].forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 0.35);
+          });
+        } else if (type === 'warn') {
+          // 차단 채널 띡 경고음
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        }
+      } catch (e) {}
+    }
+
+    // 토스트 알림창 헬퍼
+    let toastTimeout = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toastAlert');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      playMapleSfx('warn');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // 화면 전환 헬퍼
+    function switchView(viewName) {
+      playMapleSfx('click');
+      document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById(
+        viewName === 'auth' ? 'viewAuth' :
+        viewName === 'world' ? 'viewWorldChannel' :
+        viewName === 'char' ? 'viewCharSelect' : 'viewAuth'
+      );
+      if (target) target.classList.add('active');
+
+      if (viewName === 'char') {
+        renderCharacterPreview();
+      }
+    }
+
+    // 채널 선택 인터랙션
+    function selectChannel(chNum) {
+      if (chNum === 1) {
+        window.currentChannel = 1;
+        playMapleSfx('channel');
+        switchView('char');
+      } else {
+        handleBlockedChannel(chNum);
+      }
+    }
+
+    function handleBlockedChannel(chNum) {
+      showToast(`현재 [그림자 1채널]만 개방되어 있습니다. (채널 ${chNum} 혼잡/준비중)`);
+    }
+
+    function selectCharSlot(slotNum) {
+      playMapleSfx('click');
+      document.getElementById('slotCardMain').classList.add('selected');
+    }
+
+    // 키보드 보호
     function setupKeyboardProtection() {
-      const authInputs = document.querySelectorAll('#authOverlay input');
+      const authInputs = document.querySelectorAll('input, select, textarea');
       authInputs.forEach(input => {
         ['keydown', 'keyup', 'keypress'].forEach(evtName => {
           input.addEventListener(evtName, (e) => {
-            // 인풋창 내부 타이핑 시 상위 Phaser 윈도우 키보드 리스너로 이벤트가 전달되어 차단되는 것을 방지
             e.stopPropagation();
           }, false);
         });
@@ -308,17 +1102,14 @@
         input.addEventListener('focus', () => {
           if (window.phaserGame && window.phaserGame.scene) {
             window.phaserGame.scene.scenes.forEach(s => {
-              if (s.input && s.input.keyboard) {
-                s.input.keyboard.enabled = false;
-              }
+              if (s.input && s.input.keyboard) s.input.keyboard.enabled = false;
             });
           }
         });
       });
 
-      // 윈도우 레벨 캡처 가드: 인풋 포커스 상태에서 눌린 키는 절대 브라우저 기본 동작이 취소되지 않도록 보호
       window.addEventListener('keydown', (e) => {
-        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
           e.stopPropagation();
         }
       }, true);
@@ -332,6 +1123,7 @@
 
     // 탭 전환
     function switchAuthTab(type) {
+      playMapleSfx('click');
       const tabLogin = document.getElementById('tabLogin');
       const tabRegister = document.getElementById('tabRegister');
       const formLogin = document.getElementById('formLogin');
@@ -356,7 +1148,7 @@
       }
     }
 
-    // 로컬스토리지 하이브리드 영구 백업 시스템 (Vercel 서버리스 초기화 완벽 방어)
+    // 로컬스토리지 하이브리드 백업 시스템
     const STORAGE_KEY_ACCOUNTS = 'legion_hybrid_accounts_v1';
     const STORAGE_KEY_ACTIVE = 'legion_active_user_v1';
 
@@ -382,46 +1174,10 @@
       localStorage.setItem(STORAGE_KEY_ACTIVE, user.username);
     }
 
-    // 서버가 리셋되었을 때 로컬 계정을 서버 DB에 자동 복구 (Self-heal)
-    async function selfHealServerAccount(localAcc) {
-      if (!localAcc || !localAcc.username || !localAcc.password) return;
-      try {
-        // 1. 서버에 계정 재등록 시도
-        await fetch(`${API_URL}/api/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: localAcc.username,
-            password: localAcc.password,
-            name: localAcc.name || localAcc.username,
-            nickname: localAcc.nickname || localAcc.username
-          })
-        });
-        // 2. 최신 게임 진행 데이터 복원 저장
-        await fetch(`${API_URL}/api/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: localAcc.username,
-            level: localAcc.level || 1,
-            exp: localAcc.exp || 0,
-            hp: localAcc.hp || 100,
-            mp: localAcc.mp || 80,
-            job_tier: localAcc.job_tier || 1,
-            kills: localAcc.kills || 0,
-            quest_status: localAcc.quest_status || 'NOT_STARTED',
-            quest_kills: localAcc.quest_kills || 0
-          })
-        });
-        console.log(`[Self-Heal] Vercel 서버 DB에 [${localAcc.username}] 계정 복원 완료`);
-      } catch (err) {
-        console.warn('[Self-Heal] 백그라운드 복원 건너뜀 (오프라인 모드)');
-      }
-    }
-
-    // 회원가입 요청
+    // 회원가입
     async function handleRegister(e) {
       e.preventDefault();
+      playMapleSfx('click');
       const username = document.getElementById('regUsername').value.trim();
       const password = document.getElementById('regPassword').value.trim();
       const name = document.getElementById('regName').value.trim();
@@ -437,10 +1193,13 @@
         username,
         name,
         nickname,
+        title: '초보 시노비',
+        color_theme: 'default',
+        selected_weapon: 'shuriken',
         level: 1,
         exp: 0,
-        hp: 100,
-        mp: 80,
+        hp: 200,
+        mp: 200,
         job_tier: 1,
         kills: 0,
         quest_status: 'NOT_STARTED',
@@ -456,42 +1215,38 @@
         const data = await res.json();
 
         if (res.ok) {
-          // 서버 및 로컬스토리지 동시 영구 저장
-          saveLocalAccount(data.user || localUserData, password);
+          const u = data.user || localUserData;
+          saveLocalAccount(u, password);
           msg.className = 'auth-msg success';
-          msg.innerText = `회원가입 완료! [${nickname}]님 환영합니다. 로그인 중...`;
-          setTimeout(() => {
-            applyUserSession(data.user || localUserData);
-          }, 600);
+          msg.innerText = `회원가입 완료! [${nickname}]님 환영합니다. 월드 채널로 이동 중...`;
+          setTimeout(() => enterWorldSelection(u), 600);
           return;
         } else {
-          // 서버 에러인 경우 중복 계정인지 체크
           if (data.detail && data.detail.includes('이미 존재하는')) {
             msg.className = 'auth-msg error';
             msg.innerText = data.detail;
             return;
           }
-          // 기타 Vercel 서버리스 일시 장애 시 로컬스토리지 백업으로 진행 허용
           saveLocalAccount(localUserData, password);
           msg.className = 'auth-msg success';
-          msg.innerText = `회원가입 완료 (로컬 영구 백업 보관)! [${nickname}]님 환영합니다.`;
-          setTimeout(() => applyUserSession(localUserData), 600);
+          msg.innerText = `회원가입 완료! [${nickname}]님 환영합니다.`;
+          setTimeout(() => enterWorldSelection(localUserData), 600);
           return;
         }
       } catch (err) {
-        // 서버 오프라인이어도 브라우저 로컬스토리지로 가입 및 영구 보존 지원
         saveLocalAccount(localUserData, password);
         msg.className = 'auth-msg success';
-        msg.innerText = `회원가입 완료 (영구 로컬 백업 모드)! [${nickname}]님 환영합니다.`;
-        setTimeout(() => applyUserSession(localUserData), 600);
+        msg.innerText = `회원가입 완료 (로컬 안전 모드)! [${nickname}]님 환영합니다.`;
+        setTimeout(() => enterWorldSelection(localUserData), 600);
       } finally {
         btn.disabled = false;
       }
     }
 
-    // 로그인 요청
+    // 로그인
     async function handleLogin(e) {
       e.preventDefault();
+      playMapleSfx('click');
       const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value.trim();
       const msg = document.getElementById('loginMsg');
@@ -515,30 +1270,24 @@
         if (res.ok) {
           saveLocalAccount(data.user, password);
           msg.className = 'auth-msg success';
-          msg.innerText = `로그인 성공! ${data.user.nickname}님의 데이터를 불러옵니다...`;
-          setTimeout(() => {
-            applyUserSession(data.user);
-          }, 500);
+          msg.innerText = `로그인 성공! [${data.user.nickname}]님 채널 선택창으로 이동합니다...`;
+          setTimeout(() => enterWorldSelection(data.user), 500);
           return;
         } else {
-          // 서버에 계정이 없거나(Vercel 서버리스 재부팅으로 DB 파일 초기화된 경우)
           if (localAcc && localAcc.password === password) {
             msg.className = 'auth-msg success';
-            msg.innerText = `브라우저 안전 백업 데이터로부터 [${localAcc.nickname}] 계정을 자동 복구합니다!`;
-            // Vercel 서버 DB에 자동 복구 전송
-            selfHealServerAccount(localAcc);
-            setTimeout(() => applyUserSession(localAcc), 600);
+            msg.innerText = `로컬 백업 데이터로 [${localAcc.nickname}]님 로그인되었습니다!`;
+            setTimeout(() => enterWorldSelection(localAcc), 500);
             return;
           }
           msg.className = 'auth-msg error';
           msg.innerText = data.detail || '아이디 또는 비밀번호가 틀렸습니다.';
         }
       } catch (err) {
-        // 서버 연결 실패 시 로컬 백업으로 로그인 검증
         if (localAcc && localAcc.password === password) {
           msg.className = 'auth-msg success';
-          msg.innerText = `로컬 백업 데이터로 로그인되었습니다 (${localAcc.nickname}님)!`;
-          setTimeout(() => applyUserSession(localAcc), 600);
+          msg.innerText = `로컬 백업 모드로 로그인되었습니다 (${localAcc.nickname}님)!`;
+          setTimeout(() => enterWorldSelection(localAcc), 500);
           return;
         }
         msg.className = 'auth-msg error';
@@ -548,19 +1297,214 @@
       }
     }
 
-    // 세션 적용 및 게임 화면 진입 (로그인 완료 시 게임 및 스킬 활성화)
-    function applyUserSession(user) {
+    // 월드 및 채널 선택창 진입
+    function enterWorldSelection(user) {
       window.currentUser = user;
-      document.getElementById('authOverlay').style.opacity = '0';
+      document.getElementById('worldLoggedNick').innerText = user.nickname;
+      updateCharacterSlotDisplay(user);
+      switchView('world');
+    }
+
+    // 캐릭터 슬롯 정보 갱신
+    function updateCharacterSlotDisplay(user) {
+      if (!user) return;
+      document.getElementById('slotTitleDisplay').innerText = `[${user.title || '초보 시노비'}]`;
+      document.getElementById('slotNickDisplay').innerText = user.nickname || '시노비';
+      const tierName = user.job_tier === 3 ? '3차 풍마거검사' : (user.job_tier === 2 ? '2차 듀얼시노비' : '1차 시노비');
+      document.getElementById('slotJobBadge').innerText = `${tierName} (Lv.${user.level || 1})`;
+      document.getElementById('slotHpMpText').innerText = `${user.hp || 200} / ${user.mp || 200}`;
+      document.getElementById('slotKillsText').innerText = `${user.kills || 0}마리`;
+      const weaponKo = (user.selected_weapon === 'kunai') ? '쿠나이 (Kunai)' : '표창 (Shuriken)';
+      document.getElementById('slotWeaponText').innerText = weaponKo;
+    }
+
+    // 도트 캐릭터 캔버스 렌더링 (메이플 스타일 미리보기)
+    function renderCharacterPreview(colorTheme = null) {
+      const canvas = document.getElementById('charPreviewCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const theme = colorTheme || (window.currentUser ? (window.currentUser.color_theme || window.currentUser.colorTheme || 'default') : 'default');
+
+      let scarfColor = '#d63031';
+      let suitColor = '#2c3e50';
+      let accentColor = '#ffd32a';
+
+      if (theme === 'blue') {
+        scarfColor = '#0984e3';
+        suitColor = '#1b2a47';
+        accentColor = '#70a1ff';
+      } else if (theme === 'red') {
+        scarfColor = '#d63031';
+        suitColor = '#4b1e1e';
+        accentColor = '#ff6b81';
+      } else if (theme === 'yellow') {
+        scarfColor = '#e1b12c';
+        suitColor = '#3d3419';
+        accentColor = '#feca57';
+      } else if (theme === 'purple') {
+        scarfColor = '#8854d0';
+        suitColor = '#2d1b4e';
+        accentColor = '#a55eea';
+      }
+
+      // 망토
+      ctx.fillStyle = scarfColor;
+      ctx.beginPath();
+      ctx.moveTo(14, 38); ctx.lineTo(4, 62); ctx.lineTo(22, 54);
+      ctx.fill();
+
+      // 다리 & 신발
+      ctx.fillStyle = '#2d3436';
+      ctx.fillRect(16, 56, 10, 14);
+      ctx.fillRect(30, 56, 10, 14);
+
+      // 몸통 도복
+      ctx.fillStyle = suitColor;
+      ctx.fillRect(16, 36, 24, 23);
+
+      // 벨트
+      ctx.fillStyle = '#8395a7';
+      ctx.fillRect(16, 52, 24, 4);
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(26, 51, 5, 6);
+
+      // 머리카락 뒷머리
+      ctx.fillStyle = '#2c2c54';
+      ctx.beginPath();
+      ctx.arc(28, 22, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 얼굴
+      ctx.fillStyle = '#ffdfba';
+      ctx.fillRect(12, 14, 32, 24);
+
+      // 볼터치
+      ctx.fillStyle = 'rgba(255, 118, 117, 0.5)';
+      ctx.beginPath();
+      ctx.arc(16, 27, 4, 0, Math.PI * 2);
+      ctx.arc(40, 27, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 눈
+      ctx.fillStyle = '#1e272e';
+      ctx.fillRect(19, 21, 6, 8);
+      ctx.fillRect(32, 21, 6, 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(21, 22, 3, 3);
+      ctx.fillRect(34, 22, 3, 3);
+
+      // 머리띠
+      ctx.fillStyle = '#341f97';
+      ctx.fillRect(10, 10, 36, 8);
+      ctx.fillStyle = scarfColor;
+      ctx.fillRect(10, 14, 36, 3);
+      ctx.fillStyle = accentColor;
+      ctx.beginPath();
+      ctx.arc(28, 14, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 스카프
+      ctx.fillStyle = scarfColor;
+      ctx.fillRect(14, 33, 28, 7);
+    }
+
+    // 캐릭터 커스터마이징 모달 열기
+    let selectedColorTheme = 'default';
+    function openCharConfigModal(isNew = false) {
+      playMapleSfx('click');
+      const u = window.currentUser || { nickname: '시노비', title: '초보 시노비', color_theme: 'default', selected_weapon: 'shuriken' };
+      document.getElementById('cfgNickname').value = isNew ? '' : (u.nickname || '');
+      document.getElementById('cfgTitle').value = u.title || '초보 시노비';
+      document.getElementById('cfgWeapon').value = u.selected_weapon || 'shuriken';
+
+      selectedColorTheme = u.color_theme || u.colorTheme || 'default';
+      document.querySelectorAll('.color-chip').forEach(chip => {
+        chip.classList.toggle('selected', chip.getAttribute('data-color') === selectedColorTheme);
+      });
+
+      document.getElementById('charConfigModal').style.display = 'flex';
+    }
+
+    function closeCharConfigModal() {
+      playMapleSfx('click');
+      document.getElementById('charConfigModal').style.display = 'none';
+    }
+
+    function selectColorTheme(colorName, chipEl) {
+      playMapleSfx('click');
+      selectedColorTheme = colorName;
+      document.querySelectorAll('.color-chip').forEach(c => c.classList.remove('selected'));
+      chipEl.classList.add('selected');
+      renderCharacterPreview(selectedColorTheme);
+    }
+
+    // 캐릭터 설정 저장
+    async function saveCharacterConfig() {
+      playMapleSfx('click');
+      const nick = document.getElementById('cfgNickname').value.trim();
+      const title = document.getElementById('cfgTitle').value;
+      const weapon = document.getElementById('cfgWeapon').value;
+
+      if (!nick) {
+        alert('닉네임을 입력해주세요!');
+        return;
+      }
+
+      if (!window.currentUser) return;
+
+      window.currentUser.nickname = nick;
+      window.currentUser.title = title;
+      window.currentUser.color_theme = selectedColorTheme;
+      window.currentUser.colorTheme = selectedColorTheme;
+      window.currentUser.selected_weapon = weapon;
+      window.currentUser.selectedWeapon = weapon;
+
+      // 1. 로컬스토리지 영구 저장
+      saveLocalAccount(window.currentUser);
+
+      // 2. 서버 저장 시도
+      try {
+        await fetch(`${API_URL}/api/character/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: window.currentUser.username,
+            nickname: nick,
+            title: title,
+            color_theme: selectedColorTheme,
+            selected_weapon: weapon
+          })
+        });
+      } catch (e) {}
+
+      updateCharacterSlotDisplay(window.currentUser);
+      renderCharacterPreview(selectedColorTheme);
+      closeCharConfigModal();
+      showToast('캐릭터 설정이 성공적으로 저장되었습니다!');
+    }
+
+    // 게임 시작 (선택한 캐릭터로 게임 진입)
+    function startGameWithCurrentChar() {
+      if (!window.currentUser) return;
+      playMapleSfx('start');
+
+      // 오버레이 페이드아웃
+      const overlay = document.getElementById('authOverlay');
+      overlay.style.opacity = '0';
       setTimeout(() => {
-        document.getElementById('authOverlay').style.display = 'none';
+        overlay.style.display = 'none';
       }, 350);
 
+      // 상단 바 표시
       const userBar = document.getElementById('userBar');
       userBar.style.display = 'flex';
-      document.getElementById('userNickDisplay').innerText = `${user.nickname} (Lv.${user.level})`;
+      document.getElementById('userChannelDisplay').innerText = `그림자 ${window.currentChannel}채널`;
+      const titleStr = window.currentUser.title ? `[${window.currentUser.title}] ` : '';
+      document.getElementById('userNickDisplay').innerText = `${titleStr}${window.currentUser.nickname} (Lv.${window.currentUser.level || 1})`;
 
-      // Phaser 씬이 준비되었으면 데이터 주입 및 스킬/물리/키보드 활성화
+      // Phaser 씬에 데이터 주입 및 활성화
       if (window.phaserGame && window.phaserGame.scene) {
         window.phaserGame.scene.scenes.forEach(s => {
           if (s.input && s.input.keyboard) {
@@ -571,12 +1515,27 @@
         });
         const gameScene = window.phaserGame.scene.getScene('GameScene');
         if (gameScene && gameScene.loadUserData) {
-          gameScene.loadUserData(user);
+          gameScene.loadUserData(window.currentUser);
         }
       }
     }
 
-    // 수동 저장 버튼
+    // 상단 바 '채널 변경' 버튼 -> 채널 선택창으로 복귀
+    document.getElementById('btnSwitchChannel').addEventListener('click', () => {
+      playMapleSfx('click');
+      if (window.phaserGame && window.phaserGame.scene) {
+        window.phaserGame.scene.scenes.forEach(s => {
+          if (s.physics) s.physics.pause();
+          if (s.input && s.input.keyboard) s.input.keyboard.enabled = false;
+        });
+      }
+      const overlay = document.getElementById('authOverlay');
+      overlay.style.display = 'flex';
+      overlay.style.opacity = '1';
+      switchView('world');
+    });
+
+    // 수동 저장
     document.getElementById('btnManualSave').addEventListener('click', async () => {
       if (!window.currentUser || window.currentUser.username === 'guest') {
         alert('게스트 계정은 서버에 저장되지 않습니다. 회원가입 후 이용해주세요!');
@@ -595,13 +1554,16 @@
       }
     });
 
-    // 기본 계정 (gsl05137 / wlsgns1996) 영구 탑재 및 자동완성
+    // 기본 계정 (gsl05137 / wlsgns1996) 자동완성 및 세팅
     const defaultAccounts = getLocalAccounts();
     if (!defaultAccounts['gsl05137']) {
       saveLocalAccount({
         username: 'gsl05137',
         name: '진훈',
         nickname: '시노비진훈',
+        title: '그림자의 계승자',
+        color_theme: 'default',
+        selected_weapon: 'shuriken',
         level: 1,
         exp: 0,
         hp: 200,
@@ -613,7 +1575,6 @@
       }, 'wlsgns1996');
     }
 
-    // 최근 로그인 아이디 및 기본 계정 자동완성
     const lastActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE) || 'gsl05137';
     const loginUserInput = document.getElementById('loginUsername');
     const pwdInput = document.getElementById('loginPassword');
@@ -621,16 +1582,6 @@
     if (pwdInput && lastActiveId === 'gsl05137') {
       pwdInput.value = 'wlsgns1996';
     }
-
-
-    // 전역 세이브 헬퍼 (서버 + 로컬스토리지 동시 저장)
-    window.syncLocalProgress = (progressData) => {
-      if (!window.currentUser || !window.currentUser.username) return;
-      saveLocalAccount({
-        ...window.currentUser,
-        ...progressData
-      });
-    };
 
     // 서버 상태 체크
     async function checkServer() {
@@ -646,9 +1597,6 @@
     checkServer();
   </script>
 
-
-
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
-
