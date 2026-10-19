@@ -41,7 +41,7 @@ export default class HUD {
     this.questProgress = fix(scene.add.text(GAME.width - 20, 82, '', { ...st, fontSize: '11px', color: '#55efc4' }).setOrigin(1, 0));
     
     // 하단 조작 가이드
-    this.guideText = fix(scene.add.text(12, GAME.height - 24, '[1/2/3]: 전직(30Lv 2차, 60Lv 3차) | [Ctrl]: 기본공격 | [A]: 바람스킬(쿨10초) | [Z]: 꽂힌무기 회수 | [Space]: NPC 대화', { ...st, fontSize: '12px', color: '#f1f2f6' }));
+    this.guideText = fix(scene.add.text(12, GAME.height - 24, '[1/2/3]: 전직(30Lv 2차, 60Lv 3차) | [X]: 점프 | [Ctrl]: 기본공격 | [A]: 바람스킬(쿨10초) | [Z]: 꽂힌무기 회수 | [Space]: NPC 대화', { ...st, fontSize: '12px', color: '#f1f2f6' }));
     
     this.death = fix(scene.add.text(GAME.width / 2, GAME.height / 2, '쓰러졌습니다\n잠시 후 부활합니다',
       { ...st, fontSize: '32px', align: 'center', color: '#ff6b6b' }).setOrigin(0.5)).setVisible(false);

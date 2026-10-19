@@ -10,7 +10,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true).setDepth(10);
 
     this.cursors = scene.input.keyboard.createCursorKeys();
-    this.altKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ALT);
+    this.xKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
     this.ctrlKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL);
     this.aKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.sKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -121,7 +121,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       if (dir) { this.facing = dir; this.setFlipX(dir < 0); }
 
       const grounded = this.body.blocked.down || this.body.touching.down;
-      if (Phaser.Input.Keyboard.JustDown(this.altKey) && grounded) {
+      if (Phaser.Input.Keyboard.JustDown(this.xKey) && grounded) {
         this.setVelocityY(PLAYER.jump);
       }
     }
