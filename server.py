@@ -52,11 +52,12 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
-    # 캐릭터 커스터마이징 컬럼 (칭호, 도복 색상, 주무기 성향) 마이그레이션
+    # 캐릭터 커스터마이징 컬럼 (칭호, 도복 색상, 주무기 성향, 캐릭터 직업) 마이그레이션
     for col_def in [
         ("title", "TEXT DEFAULT '초보 시노비'"),
         ("color_theme", "TEXT DEFAULT 'default'"),
-        ("selected_weapon", "TEXT DEFAULT 'shuriken'")
+        ("selected_weapon", "TEXT DEFAULT 'shuriken'"),
+        ("character_class", "TEXT DEFAULT 'shinobi'")
     ]:
         try:
             cursor.execute(f"ALTER TABLE users ADD COLUMN {col_def[0]} {col_def[1]}")
@@ -67,8 +68,8 @@ def init_db():
     cursor.execute("SELECT id FROM users WHERE username = ?", ("gsl05137",))
     if not cursor.fetchone():
         cursor.execute("""
-        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon)
-        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0, '그림자의 계승자', 'default', 'shuriken')
+        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, character_class)
+        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0, '그림자의 계승자', 'default', 'shuriken', 'shinobi')
         """, ("gsl05137", hash_pw("wlsgns1996"), "진훈", "시노비진훈"))
     conn.commit()
     conn.close()
@@ -102,6 +103,7 @@ class UpdateCharacterRequest(BaseModel):
     title: str | None = None
     color_theme: str | None = None
     selected_weapon: str | None = None
+    character_class: str | None = None
 
 @app.get("/")
 def read_root():
@@ -128,13 +130,13 @@ def register(req: RegisterRequest):
 
     hashed = hash_pw(password)
     cursor.execute("""
-        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon)
-        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0, '초보 시노비', 'default', 'shuriken')
+        INSERT INTO users (username, password, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, character_class)
+        VALUES (?, ?, ?, ?, 1, 0, 200, 200, 1, 0, 'NOT_STARTED', 0, '초보 시노비', 'default', 'shuriken', 'shadow_lord')
     """, (username, hashed, name, nickname))
     conn.commit()
 
     cursor.execute("""
-        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, character_class
         FROM users WHERE username = ?
     """, (username,))
     user = dict(cursor.fetchone())
@@ -155,7 +157,7 @@ def login(req: LoginRequest):
     hashed = hash_pw(password)
 
     cursor.execute("""
-        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, character_class
         FROM users
         WHERE username = ? AND password = ?
     """, (username, hashed))
@@ -202,6 +204,9 @@ def update_character(req: UpdateCharacterRequest):
     if req.selected_weapon is not None:
         updates.append("selected_weapon = ?")
         params.append(req.selected_weapon)
+    if req.character_class is not None:
+        updates.append("character_class = ?")
+        params.append(req.character_class)
 
     if not updates:
         conn.close()
@@ -215,7 +220,7 @@ def update_character(req: UpdateCharacterRequest):
     conn.commit()
 
     cursor.execute("""
-        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, character_class
         FROM users WHERE username = ?
     """, (req.username,))
     row = cursor.fetchone()
@@ -231,7 +236,7 @@ def get_user(username: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, created_at, updated_at
+        SELECT id, username, name, nickname, level, exp, hp, mp, job_tier, kills, quest_status, quest_kills, title, color_theme, selected_weapon, character_class, created_at, updated_at
         FROM users WHERE username = ?
     """, (username,))
     row = cursor.fetchone()

@@ -40,8 +40,7 @@ export default class HUD {
     this.questTitle = fix(scene.add.text(GAME.width - 20, 64, '', { ...st, fontSize: '11px', color: '#ffd166', fontStyle: 'bold' }).setOrigin(1, 0));
     this.questProgress = fix(scene.add.text(GAME.width - 20, 82, '', { ...st, fontSize: '11px', color: '#55efc4' }).setOrigin(1, 0));
     
-    // 하단 조작 가이드 (최대 70레벨 사양)
-    this.guideText = fix(scene.add.text(12, GAME.height - 24, '[1/2/3]: 전직(Lv.30 2차, Lv.70 3차 대장군) | [X]: 점프 | [Ctrl]: 기본공격 | [A]: 바람스킬(쿨10초) | [Z]: 무기회수(2차~) | [Space]: 대화/포탈', { ...st, fontSize: '12px', color: '#f1f2f6' }));
+    this.guideText = fix(scene.add.text(12, GAME.height - 24, '[1/2/3]: 시노비 전직(1차~3차) | [Ctrl]: 공격 | [C]: 무기전환 | [A]: 바람스킬 | [Space]: 대화', { ...st, fontSize: '12px', color: '#f1f2f6' }));
     
     this.death = fix(scene.add.text(GAME.width / 2, GAME.height / 2, '쓰러졌습니다\n잠시 후 부활합니다',
       { ...st, fontSize: '32px', align: 'center', color: '#ff6b6b' }).setOrigin(0.5)).setVisible(false);
@@ -60,12 +59,32 @@ export default class HUD {
     }
 
     const tier = player.jobTier || 1;
-    let tierName = '';
-    if (tier === 1) tierName = `1차: 시노비 (Lv.30 2차 전직)`;
-    else if (tier === 2) tierName = `2차: 듀얼시노비 (Lv.70 3차 전직)`;
-    else tierName = `3차: 풍마대장군 (최고 차수)`;
+    const isShadow = player.characterClass === 'shadow_lord';
 
-    const tierColor = tier === 1 ? '#00d2d3' : (tier === 2 ? '#feca57' : '#ff4757');
+    let tierName = '';
+    let tierColor = '#00d2d3';
+
+    if (isShadow) {
+      if (tier === 1) {
+        tierName = `👑 [그림자 군주] 견습: 불완전 잔영 (최대 2인)`;
+        tierColor = '#a55eea';
+      } else if (tier === 2) {
+        tierName = `👑 [그림자 군주] 1차: 그림자 추적자 (단검+사슬낫, 최대 4인)`;
+        tierColor = '#e056fd';
+      } else if (tier === 3) {
+        tierName = `👑 [그림자 군주] 2차: 그림자 지휘관 (대검+창, 최대 5인)`;
+        tierColor = '#feca57';
+      } else {
+        tierName = `👑 [그림자 군주] 3차: 그림자 군주 (언월도+도끼, 6인 완성, 최대 6인)`;
+        tierColor = '#ff4757';
+      }
+    } else {
+      if (tier === 1) tierName = `1차: 시노비 (Lv.30 2차 전직)`;
+      else if (tier === 2) tierName = `2차: 듀얼시노비 (Lv.70 3차 전직)`;
+      else tierName = `3차: 풍마대장군 (최고 차수)`;
+      tierColor = tier === 1 ? '#00d2d3' : (tier === 2 ? '#feca57' : '#ff4757');
+    }
+
     this.tierBadge.setText(tierName).setColor(tierColor);
 
     this.lv.setText(`Lv.${xp.level}`);
@@ -96,39 +115,64 @@ export default class HUD {
       }
     }
 
-    const activeWeapons = player.scene.combat.getActiveWeapons();
-    const pinnedWeapons = player.scene.combat.getPinnedWeapons();
     const now = player.scene.time.now;
 
-    // 2차 스킬 바람속성 쿨타임 10초 상태
-    let windCooldownStr = 'READY';
-    if (now < player.skill2CooldownUntil) {
-      const sec = ((player.skill2CooldownUntil - now) / 1000).toFixed(1);
-      windCooldownStr = `${sec}s`;
-    }
+    if (isShadow) {
+      this.guideText.setText('[1/2/3]: 군주 전직(1~3차) | [Ctrl]: 분신백병전 | [A]: 사슬낫견인 | [S]: 강타 | [R]: 필살기 묵영섬멸진 | [Space]: 대화');
+      // 그림자 군주 스킬 및 무기 상태 표출
+      let ultCooldownStr = 'READY';
+      if (now < player.shadowUltCooldownUntil) {
+        const sec = ((player.shadowUltCooldownUntil - now) / 1000).toFixed(0);
+        ultCooldownStr = `${sec}s`;
+      }
 
-    if (tier === 1) {
-      this.skillStatus.setText('[Ctrl] 1차 표창 (2명 이하 타격) | 쿠나이: 30레벨 전직 필요').setColor('#00d2d3');
-      this.weaponStatus.setText(`무기: [표창 전용] | 공중: ${activeWeapons.length}개 | 회수: Z`).setColor('#7ee8fa');
-    } else if (tier === 2) {
-      const cdColor = windCooldownStr === 'READY' ? '#1dd1a1' : '#ff6b6b';
-      this.skillStatus.setText(`[Ctrl] 3명타격(꽂힘) | [A] 바람스킬(4명): ${windCooldownStr}`).setColor(cdColor);
-      const wName = player.selectedWeapon === 'kunai' ? '쿠나이' : '표창';
-      this.weaponStatus.setText(`[C] ${wName} | 몬스터 꽂힘: ${pinnedWeapons.length}개 | 회수: Z`).setColor('#feca57');
-    } else {
-      this.skillStatus.setText('[Ctrl/S] 거대 쿠나이 & 풍마표창 | [A] 바람스킬(쿨10초)').setColor('#ff4757');
-      this.weaponStatus.setText(`무기: [3차 거대무기] | 꽂힘: ${pinnedWeapons.length}개 | 회수: Z`).setColor('#ffd32a');
-    }
+      let aSkillCd = 'READY';
+      if (now < player.skill2CooldownUntil) {
+        const sec = ((player.skill2CooldownUntil - now) / 1000).toFixed(1);
+        aSkillCd = `${sec}s`;
+      }
 
-    if (player.isTelekinesisMode) {
-      this.telekenesisBadge.setText(`🌀 [염동력 집중: 전 무기 ${activeWeapons.length}기 동시 궤적 제어]`).setColor('#00ffff').setVisible(true);
+      const cloneCounts = [0, 0, 2, 4, 6][tier] || (tier >= 3 ? 6 : 0);
+      const ultColor = ultCooldownStr === 'READY' ? '#ffd32a' : '#ff6b6b';
+
+      this.skillStatus.setText(`[Ctrl] 분신백병전 | [A] 견인스킬: ${aSkillCd} | [S] 강타스킬 | [R] 필살기: ${ultCooldownStr}`).setColor(ultColor);
+      this.weaponStatus.setText(`편제: ${cloneCounts}인 분신 협공 | [2채널: 그림자 군주] | 타깃제한: ${[0, 2, 4, 5, 6][tier] || 6}명`).setColor('#e056fd');
+      this.telekenesisBadge.setText(`⚔️ [그림자 군주 OS]: 원거리 투사체 배제 · 6종 근접 무기 분신 편제 협공 ([R] 육익 섬멸진)`).setColor('#a55eea').setVisible(true);
     } else {
-      if (pinnedWeapons.length > 0) {
-        this.telekenesisBadge.setText(`몬스터에 무기 ${pinnedWeapons.length}개 꽂힘! (Z 누르면 뽑아서 회수)`).setColor('#ffd32a').setVisible(true);
-      } else if (activeWeapons.length > 0) {
-        this.telekenesisBadge.setText(`공중 무기 ${activeWeapons.length}기 대기 중 (Shift 누르면 조종, Z 회수)`).setColor('#7ee8fa').setVisible(true);
+      this.guideText.setText('[1/2/3]: 시노비 전직(1~3차) | [Ctrl]: 공격 | [C]: 무기전환 | [A]: 바람스킬 | [Space]: 대화');
+      // 기존 시노비 모드
+      const activeWeapons = player.scene.combat.getActiveWeapons();
+      const pinnedWeapons = player.scene.combat.getPinnedWeapons();
+
+      let windCooldownStr = 'READY';
+      if (now < player.skill2CooldownUntil) {
+        const sec = ((player.skill2CooldownUntil - now) / 1000).toFixed(1);
+        windCooldownStr = `${sec}s`;
+      }
+
+      if (tier === 1) {
+        this.skillStatus.setText('[Ctrl] 1차 표창 (2명 이하 타격) | [1채널: 시노비]').setColor('#00d2d3');
+        this.weaponStatus.setText(`무기: [표창 전용] | 공중: ${activeWeapons.length}개 | 회수: Z`).setColor('#7ee8fa');
+      } else if (tier === 2) {
+        const cdColor = windCooldownStr === 'READY' ? '#1dd1a1' : '#ff6b6b';
+        this.skillStatus.setText(`[Ctrl] 3명타격(꽂힘) | [A] 바람스킬(4명): ${windCooldownStr}`).setColor(cdColor);
+        const wName = player.selectedWeapon === 'kunai' ? '쿠나이' : '표창';
+        this.weaponStatus.setText(`[C] ${wName} | 몬스터 꽂힘: ${pinnedWeapons.length}개 | 회수: Z`).setColor('#feca57');
       } else {
-        this.telekenesisBadge.setText('Lv.30 2차 듀얼시노비, Lv.70 3차 풍마대장군 전직 (1/2/3키 테스트 가능)').setColor('#a4b0be').setVisible(true);
+        this.skillStatus.setText('[Ctrl/S] 거대 쿠나이 & 풍마표창 | [A] 바람스킬(쿨10초)').setColor('#ff4757');
+        this.weaponStatus.setText(`무기: [3차 거대무기] | 꽂힘: ${pinnedWeapons.length}개 | 회수: Z`).setColor('#ffd32a');
+      }
+
+      if (player.isTelekinesisMode) {
+        this.telekenesisBadge.setText(`🌀 [염동력 집중: 전 무기 ${activeWeapons.length}기 동시 궤적 제어]`).setColor('#00ffff').setVisible(true);
+      } else {
+        if (pinnedWeapons.length > 0) {
+          this.telekenesisBadge.setText(`몬스터에 무기 ${pinnedWeapons.length}개 꽂힘! (Z 누르면 뽑아서 회수)`).setColor('#ffd32a').setVisible(true);
+        } else if (activeWeapons.length > 0) {
+          this.telekenesisBadge.setText(`공중 무기 ${activeWeapons.length}기 대기 중 (Shift 누르면 조종, Z 회수)`).setColor('#7ee8fa').setVisible(true);
+        } else {
+          this.telekenesisBadge.setText('Lv.30 2차 듀얼시노비, Lv.70 3차 풍마대장군 전직 ([1/2/3]키)').setColor('#a4b0be').setVisible(true);
+        }
       }
     }
   }

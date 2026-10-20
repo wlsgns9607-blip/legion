@@ -777,21 +777,23 @@
         <span>📡 [그림자] 채널 목록 — 입장할 채널을 클릭하세요:</span>
       </div>
 
-      <!-- 채널 그리드 (채널 1만 클릭 가능, 채널 2~10은 비활성화) -->
+      <!-- 채널 그리드 (채널 1: 시노비, 채널 2: 그림자 군주) -->
       <div class="channel-grid">
-        <!-- 채널 1 (활성화) -->
+        <!-- 채널 1 (시노비 활성화) -->
         <div class="channel-card active-ch" id="ch1Card" onclick="selectChannel(1)">
-          <div class="ch-num">그림자 1</div>
+          <div class="ch-num">1채널: 시노비</div>
           <span class="ch-status">🟢 원활</span>
-          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+          <div class="traffic-bar"><div class="traffic-fill" style="width: 35%;"></div></div>
         </div>
 
-        <!-- 채널 2 ~ 10 (비활성화) -->
-        <div class="channel-card disabled-ch" onclick="handleBlockedChannel(2)">
-          <div class="ch-num">그림자 2</div>
-          <span class="ch-status">🔴 혼잡</span>
-          <div class="traffic-bar"><div class="traffic-fill"></div></div>
+        <!-- 채널 2 (그림자 군주 활성화) -->
+        <div class="channel-card active-ch" id="ch2Card" onclick="selectChannel(2)" style="border-color: #a55eea; background: rgba(165, 94, 234, 0.08);">
+          <div class="ch-num" style="color: #e056fd;">2채널: 그림자군주</div>
+          <span class="ch-status" style="border-color: #a55eea; color: #d8b4fe; background: rgba(165, 94, 234, 0.25);">🟢 원활</span>
+          <div class="traffic-bar"><div class="traffic-fill" style="width: 40%; background: #a55eea;"></div></div>
         </div>
+
+        <!-- 채널 3 ~ 10 (비활성화) -->
         <div class="channel-card disabled-ch" onclick="handleBlockedChannel(3)">
           <div class="ch-num">그림자 3</div>
           <span class="ch-status">🔴 혼잡</span>
@@ -836,8 +838,11 @@
 
       <div class="panel-footer-actions">
         <button class="btn-secondary" onclick="switchView('auth')">◀ 계정 변경</button>
-        <span style="font-size: 12px; color: #70a1ff;">※ 현재 테스트 기간 동안 [그림자 1채널]만 개방되어 있습니다.</span>
-        <button class="btn-primary" onclick="selectChannel(1)">그림자 1채널 입장 ▶</button>
+        <span style="font-size: 12px; color: #70a1ff;">※ [1채널]: 시노비(표창/원거리) | [2채널]: 그림자 군주(6인분신/백병전)</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-primary" onclick="selectChannel(1)" style="padding: 10px 18px; font-size: 13px;">1채널 (시노비) ▶</button>
+          <button class="btn-primary" onclick="selectChannel(2)" style="padding: 10px 18px; font-size: 13px; background: linear-gradient(135deg, #8854d0, #a55eea); color: #fff; box-shadow: 0 3px 12px rgba(136, 84, 208, 0.4);">2채널 (그림자군주) ▶</button>
+        </div>
       </div>
     </div>
 
@@ -1071,9 +1076,34 @@
 
     // 채널 선택 인터랙션
     function selectChannel(chNum) {
-      if (chNum === 1) {
-        window.currentChannel = 1;
+      if (chNum === 1 || chNum === 2) {
+        window.currentChannel = chNum;
         playMapleSfx('channel');
+
+        const targetClass = chNum === 1 ? 'shinobi' : 'shadow_lord';
+        if (window.currentUser) {
+          window.currentUser.character_class = targetClass;
+          window.currentUser.characterClass = targetClass;
+          if (chNum === 2) {
+            window.currentUser.selected_weapon = 'shadow_armory';
+            window.currentUser.selectedWeapon = 'shadow_armory';
+          } else {
+            window.currentUser.selected_weapon = 'shuriken';
+            window.currentUser.selectedWeapon = 'shuriken';
+          }
+        }
+
+        const titleEl = document.querySelector('#viewCharSelect .maple-title-bar h2');
+        const welcomeEl = document.querySelector('#viewCharSelect .user-welcome');
+        if (chNum === 1) {
+          if (titleEl) titleEl.innerHTML = '⚔️ 캐릭터 선택 & 설정 — [1채널: 시노비]';
+          if (welcomeEl) welcomeEl.innerHTML = '선택된 채널: <span style="color:#2ed573;">1채널 (시노비: 원거리 염동술)</span>';
+        } else {
+          if (titleEl) titleEl.innerHTML = '👑 캐릭터 선택 & 설정 — [2채널: 그림자 군주]';
+          if (welcomeEl) welcomeEl.innerHTML = '선택된 채널: <span style="color:#a55eea;">2채널 (그림자 군주: 6인 백병전 지휘관)</span>';
+        }
+
+        updateCharacterSlotDisplay(window.currentUser);
         switchView('char');
       } else {
         handleBlockedChannel(chNum);
@@ -1081,7 +1111,7 @@
     }
 
     function handleBlockedChannel(chNum) {
-      showToast(`현재 [그림자 1채널]만 개방되어 있습니다. (채널 ${chNum} 혼잡/준비중)`);
+      showToast(`현재 [1채널(시노비)]과 [2채널(그림자 군주)]만 개방되어 있습니다. (채널 ${chNum} 준비중)`);
     }
 
     function selectCharSlot(slotNum) {
@@ -1299,6 +1329,10 @@
 
     // 월드 및 채널 선택창 진입
     function enterWorldSelection(user) {
+      if (user) {
+        user.character_class = 'shinobi';
+        user.characterClass = 'shinobi';
+      }
       window.currentUser = user;
       document.getElementById('worldLoggedNick').innerText = user.nickname;
       updateCharacterSlotDisplay(user);
@@ -1308,13 +1342,26 @@
     // 캐릭터 슬롯 정보 갱신
     function updateCharacterSlotDisplay(user) {
       if (!user) return;
-      document.getElementById('slotTitleDisplay').innerText = `[${user.title || '초보 시노비'}]`;
-      document.getElementById('slotNickDisplay').innerText = user.nickname || '시노비';
-      const tierName = user.job_tier === 3 ? '3차 풍마거검사' : (user.job_tier === 2 ? '2차 듀얼시노비' : '1차 시노비');
+      const isShadow = (window.currentChannel === 2 || user.character_class === 'shadow_lord');
+      document.getElementById('slotTitleDisplay').innerText = `[${user.title || (isShadow ? '그림자의 계승자' : '초보 시노비')}]`;
+      document.getElementById('slotNickDisplay').innerText = user.nickname || (isShadow ? '그림자군주' : '시노비');
+
+      let tierName = '';
+      if (isShadow) {
+        tierName = user.job_tier === 3 ? '3차 군주 (언월도/도끼)' : (user.job_tier === 2 ? '2차 지휘관 (대검/창)' : '1차 추적자 (단검/사슬낫)');
+      } else {
+        tierName = user.job_tier === 3 ? '3차 풍마거검사' : (user.job_tier === 2 ? '2차 듀얼시노비' : '1차 시노비');
+      }
       document.getElementById('slotJobBadge').innerText = `${tierName} (Lv.${user.level || 1})`;
       document.getElementById('slotHpMpText').innerText = `${user.hp || 200} / ${user.mp || 200}`;
       document.getElementById('slotKillsText').innerText = `${user.kills || 0}마리`;
-      const weaponKo = (user.selected_weapon === 'kunai') ? '쿠나이 (Kunai)' : '표창 (Shuriken)';
+
+      let weaponKo = '';
+      if (isShadow) {
+        weaponKo = '6종 분신 무기군 (단검/사슬낫/대검/창/언월도/도끼)';
+      } else {
+        weaponKo = (user.selected_weapon === 'kunai') ? '쿠나이 (Kunai)' : '표창 (Shuriken)';
+      }
       document.getElementById('slotWeaponText').innerText = weaponKo;
     }
 
@@ -1497,12 +1544,23 @@
         overlay.style.display = 'none';
       }, 350);
 
+      // 채널 기반 직업 명확히 주입 (1채널: 시노비, 2채널: 그림자 군주)
+      const chClass = (window.currentChannel === 2) ? 'shadow_lord' : 'shinobi';
+      window.currentUser.character_class = chClass;
+      window.currentUser.characterClass = chClass;
+      if (chClass === 'shadow_lord') {
+        window.currentUser.selected_weapon = 'shadow_armory';
+        window.currentUser.selectedWeapon = 'shadow_armory';
+      }
+
       // 상단 바 표시
       const userBar = document.getElementById('userBar');
       userBar.style.display = 'flex';
-      document.getElementById('userChannelDisplay').innerText = `그림자 ${window.currentChannel}채널`;
+      const chBadgeText = (window.currentChannel === 2) ? '👑 2채널 (그림자군주)' : '🌀 1채널 (시노비)';
+      document.getElementById('userChannelDisplay').innerText = chBadgeText;
       const titleStr = window.currentUser.title ? `[${window.currentUser.title}] ` : '';
-      document.getElementById('userNickDisplay').innerText = `${titleStr}${window.currentUser.nickname} (Lv.${window.currentUser.level || 1})`;
+      const classStr = (chClass === 'shadow_lord') ? ' (그림자군주)' : ' (시노비)';
+      document.getElementById('userNickDisplay').innerText = `${titleStr}${window.currentUser.nickname}${classStr} Lv.${window.currentUser.level || 1}`;
 
       // Phaser 씬에 데이터 주입 및 활성화
       if (window.phaserGame && window.phaserGame.scene) {
@@ -1556,6 +1614,17 @@
 
     // 기본 계정 (gsl05137 / wlsgns1996) 자동완성 및 세팅
     const defaultAccounts = getLocalAccounts();
+    // 로컬스토리지에 이전 버전 'shadow_lord'로 저장되어 있던 계정을 모두 시노비로 복구
+    Object.keys(defaultAccounts).forEach(u => {
+      if (defaultAccounts[u].character_class === 'shadow_lord' || defaultAccounts[u].characterClass === 'shadow_lord') {
+        defaultAccounts[u].character_class = 'shinobi';
+        defaultAccounts[u].characterClass = 'shinobi';
+        defaultAccounts[u].selected_weapon = 'shuriken';
+        defaultAccounts[u].selectedWeapon = 'shuriken';
+        saveLocalAccount(defaultAccounts[u]);
+      }
+    });
+
     if (!defaultAccounts['gsl05137']) {
       saveLocalAccount({
         username: 'gsl05137',
@@ -1564,6 +1633,8 @@
         title: '그림자의 계승자',
         color_theme: 'default',
         selected_weapon: 'shuriken',
+        character_class: 'shinobi',
+        characterClass: 'shinobi',
         level: 1,
         exp: 0,
         hp: 200,

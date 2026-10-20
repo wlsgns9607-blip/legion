@@ -539,11 +539,181 @@ export default class BootScene extends Phaser.Scene {
       g.fillStyle(0x2c2c54).fillCircle(16, 22, 2.5);
     });
 
-    // 퀘스트 진행 중 말풍선 [...] (32 x 32)
-    tex('quest_icon_ing', 32, 32, g => {
-      g.fillStyle(0x7f8c8d).fillCircle(16, 16, 14);
-      g.fillStyle(0xbdc3c7).fillCircle(16, 16, 12);
-      g.fillStyle(0x2c3e50).fillCircle(10, 16, 2).fillCircle(16, 16, 2).fillCircle(22, 16, 2);
+    // ==============================================================
+    // 직업 [그림자 군주] 2.5등신 동양풍 다크 판타지 SD 스프라이트 & 6대 무기
+    // ==============================================================
+
+    // [그림자 군주 본체] 2.5등신 SD (64 x 64) - 검은 삿갓, 붉은 안광, 털장식 경번갑, 도포자락, 흑도
+    tex('player_shadow_lord', 64, 64, g => {
+      // 펄럭이는 칠흑 도포 자락 (#1E2338, #1A1A24)
+      g.fillStyle(0x1a1a24).fillTriangle(18, 38, 4, 62, 28, 56);
+      g.fillStyle(0x1e2338).fillTriangle(46, 38, 36, 56, 60, 62);
+
+      // 다리 & 신발 (흑철 혜)
+      g.fillStyle(0x111118).fillRect(20, 52, 9, 12).fillRect(35, 52, 9, 12);
+      g.fillStyle(0xd4af37).fillRect(20, 62, 9, 2).fillRect(35, 62, 9, 2);
+
+      // 동양식 흑철 경번갑 몸통 & 황동 띠 (#D4AF37)
+      g.fillStyle(0x22273d).fillRoundedRect(18, 32, 28, 22, 3);
+      g.fillStyle(0x1a1a24).fillRect(22, 34, 20, 16);
+      g.fillStyle(0xd4af37).fillRect(18, 48, 28, 4); // 황동 복대
+      g.fillStyle(0xff3344).fillCircle(32, 50, 2); // 붉은 영력 보석
+
+      // 어깨 늑대 털 장식 (회백색 #dfe4ea)
+      g.fillStyle(0xdfe4ea).fillCircle(17, 33, 6).fillCircle(47, 33, 6);
+      g.fillStyle(0xb2bec3).fillCircle(19, 35, 4).fillCircle(45, 35, 4);
+
+      // 허리춤 초심자용 흑도 (Black Katana)
+      g.fillStyle(0x0a0a0f).fillRect(12, 45, 14, 3);
+      g.fillStyle(0xd4af37).fillCircle(14, 46, 2); // 황동 쯔바
+
+      // 얼굴 (창백한 피부)
+      g.fillStyle(0xf1e7fe).fillRoundedRect(18, 14, 28, 20, 6);
+
+      // 붉게 번뜩이는 도깨비불 마안 (#FF3344)
+      g.fillStyle(0xff3344).fillRoundedRect(22, 20, 6, 7, 2).fillRoundedRect(36, 20, 6, 7, 2);
+      g.fillStyle(0xffffff).fillCircle(24, 22, 1.5).fillCircle(38, 22, 1.5);
+
+      // 삿갓 챙 그늘 & 휘날리는 흑발
+      g.fillStyle(0x0f0f17).fillTriangle(14, 18, 8, 36, 20, 26);
+      g.fillStyle(0x0f0f17).fillTriangle(50, 18, 44, 26, 56, 36);
+
+      // 동양식 검은 삿갓 (Black Satgat)
+      g.fillStyle(0x1a1a24).fillTriangle(32, 4, 4, 20, 60, 20);
+      g.fillStyle(0x0d0d13).fillRect(2, 19, 60, 3);
+      g.fillStyle(0xd4af37).fillCircle(32, 6, 3); // 삿갓 꼭지 황동 장식
+
+      // 바람에 휘날리는 붉은/검은 갓끈
+      g.fillStyle(0xff3344).fillPoints([{ x: 20, y: 22 }, { x: 12, y: 34 }, { x: 16, y: 40 }], true);
+    });
+
+    // 그림자 분신 공통 베이스 (56 x 72) - 반투명 수묵 먹물 실루엣 (Alpha 75%)
+    tex('shadow_clone', 56, 72, g => {
+      // 먹물 오라 외곽 흩날림 (Alpha 0.45)
+      g.fillStyle(0x0f0c1b, 0.45).fillCircle(28, 36, 30);
+      g.fillStyle(0x1a152e, 0.65).fillCircle(28, 36, 24);
+
+      // 먹물 도포 실루엣
+      g.fillStyle(0x0a0814, 0.85).fillTriangle(14, 38, 2, 64, 22, 54);
+
+      // 다리 & 몸체 (칠흑 먹물)
+      g.fillStyle(0x120e20, 0.9).fillRoundedRect(16, 56, 10, 14, 3);
+      g.fillStyle(0x120e20, 0.9).fillRoundedRect(30, 56, 10, 14, 3);
+      g.fillStyle(0x0a0814, 0.95).fillRoundedRect(16, 36, 24, 23, 4);
+
+      // 머리 & 얼굴 (수묵 덩어리)
+      g.fillStyle(0x080612, 0.95).fillCircle(28, 22, 18);
+
+      // 은은한 심연 보랏빛 안광
+      g.fillStyle(0xa333ff).fillRoundedRect(20, 20, 5, 6, 2);
+      g.fillStyle(0xa333ff).fillRoundedRect(31, 20, 5, 6, 2);
+      g.fillStyle(0xffffff).fillCircle(22, 22, 1.5).fillCircle(33, 22, 1.5);
+
+      // 흩날리는 먹물 띠 자락
+      g.fillStyle(0x341f97, 0.8).fillRoundedRect(14, 33, 28, 7, 3);
+    });
+
+    // 0. 본체 흑도 (Shadow Blade / 평타용, 46 x 14) - 흑요석 블랙 + 황동 골드
+    tex('shadow_blade', 46, 14, g => {
+      g.fillStyle(0x1a1a24, 0.5).fillRoundedRect(0, 2, 46, 10, 4);
+      g.fillStyle(0x0f0f17).fillPoints([{ x: 8, y: 7 }, { x: 44, y: 3 }, { x: 44, y: 11 }], true);
+      g.fillStyle(0xd4af37).fillRect(8, 5, 4, 4); // 황동 쯔바
+      g.fillStyle(0xffffff).fillRect(14, 6, 26, 2); // 칼날 하이라이트
+      g.fillStyle(0xff3344).fillCircle(40, 7, 2); // 붉은 검기 끝단
+    });
+
+    // 1. 단검 (분신 1호 역수 쌍단검, 32 x 16) - 비취색 독기 발광 (#00FF99)
+    tex('shadow_dagger', 32, 16, g => {
+      // 비취색 네온 오라 글로우
+      g.fillStyle(0x00ff99, 0.45).fillCircle(18, 8, 12);
+      // 역수 흑철 칼날
+      g.fillStyle(0x1e272e).fillPoints([{ x: 6, y: 8 }, { x: 30, y: 3 }, { x: 26, y: 13 }], true);
+      // 독기 서린 비취 칼날 코어 (#00FF99)
+      g.fillStyle(0x00ff99).fillRect(10, 7, 18, 2);
+      g.fillStyle(0xffffff).fillRect(16, 7, 8, 1);
+      g.fillStyle(0x2f3640).fillRect(0, 6, 7, 4); // 손잡이
+    });
+
+    // 2. 사슬낫 (분신 2호 Kusarigama, 48 x 40) - 핏빛 자색 발광 (#A333FF)
+    tex('shadow_kusarigama', 48, 40, g => {
+      // 핏빛 자색 오라 글로우
+      g.fillStyle(0xa333ff, 0.35).fillCircle(24, 20, 22);
+      // 낫 칼날
+      g.fillStyle(0x130f40).beginPath().arc(24, 16, 18, -Math.PI * 0.75, 0).strokePath();
+      g.fillStyle(0xa333ff).fillTriangle(18, 2, 44, 10, 28, 22);
+      g.fillStyle(0xffffff).fillTriangle(22, 5, 40, 10, 28, 17);
+      // 자루 & 뱀 형태 사슬과 분동
+      g.fillStyle(0x2f3542).fillRect(18, 16, 6, 22);
+      g.fillStyle(0xa333ff).fillCircle(8, 34, 6); // 자색 분동
+      g.lineStyle(2, 0xa333ff).lineBetween(21, 36, 8, 34);
+    });
+
+    // 3. 대검 (분신 3호 Greatsword, 68 x 26) - 청백색 서리 발광 (#33CCFF)
+    tex('shadow_greatsword', 68, 26, g => {
+      // 청백색 서리 오라 글로우
+      g.fillStyle(0x33ccff, 0.4).fillRoundedRect(0, 1, 68, 24, 4);
+      // 묵직한 거대 흑철 칼날
+      g.fillStyle(0x0c2461).fillRect(12, 4, 48, 18);
+      g.fillStyle(0x33ccff).fillRect(14, 7, 44, 12); // 서리 발광 코어
+      g.fillStyle(0xffffff).fillRect(18, 12, 36, 2);
+      // 칼끝 사선 경사
+      g.fillStyle(0x0c2461).fillTriangle(60, 4, 68, 13, 60, 22);
+      g.fillStyle(0xd4af37).fillRect(6, 2, 6, 22); // 황동 가드
+      g.fillStyle(0x1e272e).fillRect(0, 10, 6, 6); // 손잡이
+    });
+
+    // 4. 창 (분신 4호 Spiral Lance, 76 x 18) - 진홍색 화염 발광 (#FF3300)
+    tex('shadow_lance', 76, 18, g => {
+      // 진홍 화염 오라 글로우
+      g.fillStyle(0xff3300, 0.4).fillRoundedRect(0, 3, 76, 12, 4);
+      // 긴 흑철 자루
+      g.fillStyle(0x2c3e50).fillRect(0, 8, 52, 3);
+      // 붉은 술 장식 (#FF3300)
+      g.fillStyle(0xff3300).fillTriangle(48, 4, 54, 9, 48, 14);
+      // 원뿔형 창날 & 회전 링
+      g.fillStyle(0xb33939).fillTriangle(52, 2, 74, 9, 52, 16);
+      g.fillStyle(0xffffff).fillTriangle(56, 5, 72, 9, 56, 13);
+      g.fillStyle(0xff3300).fillCircle(52, 9, 4);
+    });
+
+    // 5. 언월도 (분신 5호 Guandao, 66 x 28) - 금빛 섬광 발광 (#FFCC00)
+    tex('shadow_glaive', 66, 28, g => {
+      // 금빛 섬광 오라 글로우
+      g.fillStyle(0xffcc00, 0.35).fillCircle(38, 14, 22);
+      // 긴 장병 봉
+      g.fillStyle(0x1e272e).fillRect(0, 12, 42, 4);
+      // 초승달 대형 곡도 날붙이
+      g.fillStyle(0xcd6133).fillPoints([
+        { x: 40, y: 14 }, { x: 46, y: 2 }, { x: 64, y: 4 },
+        { x: 66, y: 13 }, { x: 56, y: 26 }, { x: 44, y: 20 }
+      ], true);
+      // 금빛 칼날 코어 (#FFCC00)
+      g.fillStyle(0xffcc00).fillRect(44, 11, 20, 4);
+      g.fillStyle(0xffffff).fillRect(46, 12, 14, 2);
+      g.fillStyle(0xd4af37).fillCircle(40, 14, 5); // 용머리 황동 연결부
+    });
+
+    // 6. 도끼 (분신 6호 Battle Axe, 54 x 42) - 흑철 & 용암 균열 주황 (#111111 + #FF6600)
+    tex('shadow_axe', 54, 42, g => {
+      // 용암 균열 오라 글로우
+      g.fillStyle(0xff6600, 0.4).fillCircle(27, 21, 22);
+      // 단단한 흑철 자루
+      g.fillStyle(0x111111).fillRect(24, 0, 6, 42);
+      // 넓은 양날 도끼 머리
+      g.fillStyle(0x1e272e).fillTriangle(6, 2, 26, 14, 10, 28);
+      g.fillStyle(0x1e272e).fillTriangle(48, 2, 28, 14, 44, 28);
+      // 칼날 용암 균열 발광선 (#FF6600)
+      g.fillStyle(0xff6600).fillRect(6, 5, 4, 22).fillRect(44, 5, 4, 22);
+      g.fillStyle(0xffdd59).fillRect(8, 8, 2, 16).fillRect(44, 8, 2, 16);
+      g.fillStyle(0xd4af37).fillCircle(27, 15, 5); // 중앙 황동 코어
+    });
+
+    // 먹물 참격 이펙트 (Ink Splatter Slash, 130 x 85) - 붓 터치 농담 및 무기 발광선
+    tex('shadow_slash', 130, 85, g => {
+      g.fillStyle(0x0f0c1b, 0.55).fillEllipse(65, 42, 120, 70);
+      g.fillStyle(0xa333ff, 0.85).beginPath().arc(65, 42, 52, -Math.PI * 0.8, Math.PI * 0.25).strokePath();
+      g.fillStyle(0x00ff99, 0.9).beginPath().arc(65, 42, 46, -Math.PI * 0.75, Math.PI * 0.2).strokePath();
+      g.fillStyle(0xffffff).fillCircle(92, 20, 5).fillCircle(102, 40, 6);
     });
 
     gfx.destroy();

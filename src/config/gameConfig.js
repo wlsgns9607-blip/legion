@@ -132,6 +132,66 @@ export const TIERS = {
   }
 };
 
+// ==============================================================
+// 직업 [그림자 군주 (Shadow Lord)] 전투 시스템 및 분신 사양
+// ==============================================================
+export const SHADOW_LORD = {
+  className: '그림자 군주',
+  combatType: 'melee_commander',
+  tiers: {
+    1: {
+      tier: 1,
+      name: '견습 그림자 검사',
+      reqLevel: 1,
+      maxTargets: 2,       // Lv.1~29: 불완전 잔영 사출 / 최대 2인 동시 타격
+      activeClones: 0,
+      skills: ['SKL_SHD_01', 'SKL_SHD_02'],
+      desc: '불완전 잔영 사출 (최대 2인 타격)'
+    },
+    2: {
+      tier: 2,
+      name: '1차: 그림자 추적자 (단검+사슬낫)',
+      reqLevel: 30,
+      maxTargets: 4,       // Lv.30: 단검(기습 연타) + 사슬낫(견인 제어) / 최대 4인 동시 타격
+      activeClones: 2,
+      weapons: ['dagger', 'kusarigama'],
+      skills: ['SKL_SHD_11', 'SKL_SHD_12'],
+      desc: '단검(기습 4연격) + 사슬낫(중거리 견인), 최대 4인 타격'
+    },
+    3: {
+      tier: 3,
+      name: '2차: 그림자 지휘관 (대검+창)',
+      reqLevel: 70,
+      maxTargets: 5,       // Lv.70: 대검(슈퍼아머 횡베기) + 창(직선 돌진 관통) / 최대 5인 동시 타격
+      activeClones: 4,
+      weapons: ['dagger', 'kusarigama', 'greatsword', 'lance'],
+      skills: ['SKL_SHD_21', 'SKL_SHD_22'],
+      desc: '대검(에어본 횡베기) + 창(직선관통 돌진), 최대 5인 타격'
+    },
+    4: {
+      tier: 4,
+      name: '3차: 그림자 군주 (언월도+도끼)',
+      reqLevel: 110,
+      maxTargets: 6,       // Lv.110: 언월도(광역 회전) + 도끼(수직 강타 방어분쇄) / 6인 편제 완성 / 최대 6인 동시 타격
+      activeClones: 6,
+      weapons: ['dagger', 'kusarigama', 'greatsword', 'lance', 'glaive', 'axe'],
+      skills: ['SKL_SHD_31', 'SKL_SHD_32', 'SKL_SHD_ULT'],
+      desc: '언월도(광역 회전 흡입) + 도끼(방어 분쇄 강타), 6인 분신 편제, 최대 6인 타격'
+    }
+  },
+  skills: {
+    SKL_SHD_01: { id: 'SKL_SHD_01', name: '잔영격', cooldown: 0, mp: 0, maxTargets: 2, width: 140, height: 90, damageMult: 1.8 },
+    SKL_SHD_02: { id: 'SKL_SHD_02', name: '그림자 밟기', cooldown: 5000, mp: 15, maxTargets: 2, width: 180, height: 90, damageMult: 2.5 },
+    SKL_SHD_11: { id: 'SKL_SHD_11', name: '쌍단 급습', cooldown: 4000, mp: 25, maxTargets: 4, width: 160, height: 100, damageMult: 3.2, bleed: true },
+    SKL_SHD_12: { id: 'SKL_SHD_12', name: '사슬 포박', cooldown: 6500, mp: 35, maxTargets: 4, width: 280, height: 110, damageMult: 2.8, pull: true },
+    SKL_SHD_21: { id: 'SKL_SHD_21', name: '단절 대검', cooldown: 7000, mp: 50, maxTargets: 5, width: 260, height: 140, damageMult: 4.5, airborne: true },
+    SKL_SHD_22: { id: 'SKL_SHD_22', name: '나선 돌파', cooldown: 9000, mp: 60, maxTargets: 5, width: 340, height: 90, damageMult: 4.6, pierce: true },
+    SKL_SHD_31: { id: 'SKL_SHD_31', name: '풍마 언월참', cooldown: 10000, mp: 70, maxTargets: 6, width: 300, height: 200, damageMult: 5.2, vacuum: true },
+    SKL_SHD_32: { id: 'SKL_SHD_32', name: '단죄의 대부', cooldown: 13000, mp: 85, maxTargets: 6, width: 240, height: 220, damageMult: 6.0, stun: true },
+    SKL_SHD_ULT: { id: 'SKL_SHD_ULT', name: '군주의 영토 : 육익 섬멸진', cooldown: 45000, mp: 100, maxTargets: 6, width: 620, height: 320, damageMult: 18.0 }
+  }
+};
+
 // 퀘스트 시스템 설정
 export const QUEST_CONFIG = {
   quest1: {

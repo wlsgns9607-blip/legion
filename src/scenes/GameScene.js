@@ -187,6 +187,10 @@ export default class GameScene extends Phaser.Scene {
     this.xp.level = user.level || 1;
     this.xp.exp = user.exp || 0;
     this.player.applyLevelUp(this.xp.level);
+    // 채널 1: 시노비, 채널 2: 그림자 군주
+    const isChannel2 = (typeof window !== 'undefined' && window.currentChannel === 2);
+    const targetClass = isChannel2 ? 'shadow_lord' : 'shinobi';
+    this.player.characterClass = targetClass;
     if (user.job_tier) this.player.setJobTier(user.job_tier);
     this.player.hp = Phaser.Math.Clamp(user.hp || this.player.maxHp, 1, this.player.maxHp);
     this.player.mp = Phaser.Math.Clamp(user.mp || this.player.maxMp, 0, this.player.maxMp);
@@ -194,13 +198,14 @@ export default class GameScene extends Phaser.Scene {
     if (user.quest_status) this.quest.status = user.quest_status;
     if (user.quest_kills !== undefined) this.quest.kills = user.quest_kills;
 
-    // 메이플 감성 커스텀 외형 (닉네임, 칭호, 도복 색상, 주무기) 적용
+    // 메이플 감성 커스텀 외형 (닉네임, 칭호, 도복 색상, 주무기, 직업) 적용
     if (this.player && this.player.setCustomAppearance) {
       this.player.setCustomAppearance(
         user.nickname,
         user.title,
-        user.color_theme || user.colorTheme || 'default',
-        user.selected_weapon || user.selectedWeapon || 'shuriken'
+        user.color_theme || user.colorTheme || (targetClass === 'shadow_lord' ? 'purple' : 'default'),
+        targetClass === 'shadow_lord' ? 'shadow_armory' : (user.selected_weapon || 'shuriken'),
+        targetClass
       );
     }
 

@@ -20,6 +20,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.key1 = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
     this.key2 = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
     this.key3 = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
+    this.key4 = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.FOUR);
+    this.rKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+
+    // 직업 시스템: 'shinobi' (시노비: 원거리 표창/쿠나이) | 'shadow_lord' (그림자 군주)
+    this.characterClass = 'shinobi';
+    this.shadowUltCooldownUntil = 0;
 
     // 키보드 캡처 방지: 브라우저 기본 키 이벤트(Space, Arrow, Backspace 등)를 가로채지 않도록 해제
     if (scene.input.keyboard) {
@@ -109,6 +115,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   setJobTier(tier) {
     this.jobTier = tier;
+    if (this.characterClass === 'shadow_lord') {
+      if (tier === 1) {
+        this.scene.combat.floatText(this.x, this.y - 50, '【견습 그림자 검사】 불완전 잔영 사출 (최대 2인 타격)', '#a55eea', 16);
+      } else if (tier === 2) {
+        this.scene.combat.floatText(this.x, this.y - 50, '【1차: 그림자 추적자】 단검 4연타 + 사슬낫 견인 (최대 4인 타격)', '#e056fd', 16);
+      } else if (tier === 3) {
+        this.scene.combat.floatText(this.x, this.y - 50, '【2차: 그림자 지휘관】 대검 에어본 + 창 관통 돌파 (최대 5인 타격)', '#feca57', 16);
+      } else {
+        this.scene.combat.floatText(this.x, this.y - 50, '【3차: 그림자 군주】 언월도 흡입 + 도끼 단죄, 6인 편제 (최대 6인 타격, [R]필살기)', '#ff4757', 16);
+      }
+      return;
+    }
     if (tier === 1) {
       this.selectedWeapon = 'shuriken'; // 1차는 표창만 가능
       this.scene.combat.floatText(this.x, this.y - 50, '【1차 시노비】 전직: 표창만 가능 (2명 이하 타격)', '#00d2d3', 16);
@@ -131,7 +149,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setAlpha(time < this.invulnUntil && Math.floor(time / 80) % 2 ? 0.4 : 1);
     if (time < this.stunUntil) return;
 
-    // 0. 전직 차수 즉시 변경 (1 / 2 / 3 숫자키)
+    // 직업별 2.5등신 SD 스프라이트 텍스처 동적 동기화
+    if (this.characterClass === 'shadow_lord') {
+      if (this.texture.key !== 'player_shadow_lord' && this.scene.textures.exists('player_shadow_lord')) {
+        this.setTexture('player_shadow_lord');
+        this.clearTint();
+      }
+    } else {
+      if (this.texture.key === 'player_shadow_lord') {
+        this.setTexture('player');
+        if (this.customTint) this.setTint(this.customTint);
+      }
+    }
+
+    // 0. 전직 차수 즉시 변경 (1 / 2 / 3 숫자키: 1차 시노비 / 2차 듀얼시노비 / 3차 풍마대장군)
     if (Phaser.Input.Keyboard.JustDown(this.key1)) this.setJobTier(1);
     if (Phaser.Input.Keyboard.JustDown(this.key2)) this.setJobTier(2);
     if (Phaser.Input.Keyboard.JustDown(this.key3)) this.setJobTier(3);
@@ -182,7 +213,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const s = this.orbitShurikens[i];
       if (!s || !s.active) continue;
 
-      if (this.isDead || !this.visible || i >= availableOrbitCount) {
+      // 그림자 군주는 원거리 표창 일체 배제 (표창 공전체 비표시)
+      if (this.characterClass === 'shadow_lord' || this.isDead || !this.visible || i >= availableOrbitCount) {
         s.setVisible(false);
         continue;
       }
@@ -208,7 +240,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
 
       // 색상 틴트 동기화
-      if (this.customTint) {
+      if (this.characterClass === 'shadow_lord') {
+        s.setTint(0x8e44ad);
+        s.setScale(0.55);
+      } else if (this.customTint) {
         s.setTint(this.customTint);
       } else if (this.isTelekinesisMode) {
         s.setTint(0x88ffff);
@@ -251,16 +286,27 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // 4. 차수별 공격 및 스킬 시스템
 
-    // [기본 공격] Ctrl 키: 최대 4개 제한 하에 절제되고 부드러운 투척 모션
+    // [기본 공격] Ctrl 키:
     if (this.ctrlKey.isDown && time >= this.nextAttack) {
-      // 필드에 이미 4개가 모두 날아가 있으면 연속 발사 차단
+      if (this.characterClass === 'shadow_lord') {
+        this.nextAttack = time + 280;
+        let sId = 'SKL_SHD_01';
+        if (this.jobTier === 1) sId = 'SKL_SHD_01';      // 견습: 잔영격 (최대 2인)
+        else if (this.jobTier === 2) sId = 'SKL_SHD_11'; // 1차: 쌍단 급습 (최대 4인)
+        else if (this.jobTier === 3) sId = 'SKL_SHD_21'; // 2차: 단절 대검 (최대 5인)
+        else sId = 'SKL_SHD_31';                         // 3차: 풍마 언월참 (최대 6인)
+
+        this.scene.combat.fireShadowMelee(this, sId);
+        return;
+      }
+
+      // 시노비 원거리 투사체 공격
       if (this.scene.combat && !this.scene.combat.canFire(this)) {
         return;
       }
 
       this.nextAttack = time + (PLAYER.attackInterval || 360);
 
-      // 과하지 않고 세련된 던지기 모션 (미세한 팔 뻗기 스쿼시)
       if (this.scene) {
         this.scene.tweens.add({
           targets: this,
@@ -273,39 +319,79 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
 
       if (this.jobTier === 1) {
-        // 1차: 표창만 가능, 2명 이하 타격
         this.scene.combat.fireTier1(this);
       } else if (this.jobTier === 2) {
-        // 2차: 쿠나이랑 표창 가능, 3명 이하 타격, 몬스터에 꽂힘
         this.scene.combat.fireTier2(this, this.selectedWeapon);
       } else {
-        // 3차: 큰 쿠나이, 표창 공격
         this.scene.combat.fireTier3(this);
       }
     }
 
-    // [2차 스킬] A 키: 표창과 쿠나이에 바람속성을 붙여 4명의 몬스터를 없앤다 (쿨타임 10초)
+    // [특수 스킬 1] A 키:
     if (Phaser.Input.Keyboard.JustDown(this.aKey)) {
+      if (this.characterClass === 'shadow_lord') {
+        if (time < this.skill2CooldownUntil) {
+          const remainingSec = ((this.skill2CooldownUntil - time) / 1000).toFixed(1);
+          this.scene.combat.floatText(this.x, this.y - 45, `스킬 쿨타임: ${remainingSec}초 남음`, '#ff9f43', 14);
+          return;
+        }
+        this.skill2CooldownUntil = time + 6500;
+        this.nextAttack = time + 250;
+        const sId = (this.jobTier >= 2) ? 'SKL_SHD_12' : 'SKL_SHD_02'; // 사슬 포박 (견인) 또는 그림자 밟기
+        this.scene.combat.fireShadowMelee(this, sId);
+        return;
+      }
+
+      // 시노비 2차 스킬
       if (this.jobTier < 2) {
         this.scene.combat.floatText(this.x, this.y - 45, '2차 이상 전직 후 사용 가능합니다! (2번 키)', '#ff6b6b', 14);
       } else if (time < this.skill2CooldownUntil) {
         const remainingSec = ((this.skill2CooldownUntil - time) / 1000).toFixed(1);
         this.scene.combat.floatText(this.x, this.y - 45, `바람 스킬 쿨타임: ${remainingSec}초 남음`, '#ff9f43', 14);
       } else {
-        // 쿨타임 10초 적용 및 스킬 발동
         this.skill2CooldownUntil = time + 10000;
         this.nextAttack = time + 350;
         this.scene.combat.fireWindSkill(this);
       }
     }
 
-    // [3차 스킬] S 키: 큰 쿠나이 표창 폭풍 공격
+    // [특수 스킬 2] S 키:
     if (Phaser.Input.Keyboard.JustDown(this.sKey)) {
+      if (this.characterClass === 'shadow_lord') {
+        if (this.jobTier < 2) {
+          this.scene.combat.floatText(this.x, this.y - 45, '2차 이상 전직 후 사용 가능합니다! (2번 키)', '#ff6b6b', 14);
+          return;
+        }
+        this.nextAttack = time + 350;
+        const sId = (this.jobTier >= 3) ? 'SKL_SHD_32' : 'SKL_SHD_22'; // 단죄의 대부 (도끼 기절) 또는 나선 돌파 (창)
+        this.scene.combat.fireShadowMelee(this, sId);
+        return;
+      }
+
+      // 시노비 3차 스킬
       if (this.jobTier < 3) {
         this.scene.combat.floatText(this.x, this.y - 45, '3차 이상 전직 후 사용 가능합니다! (3번 키)', '#ff6b6b', 14);
       } else {
         this.nextAttack = time + 400;
         this.scene.combat.fireTier3(this);
+      }
+    }
+
+    // [궁극기 필살기] R 키: 군주의 영토 : 육익 섬멸진
+    if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
+      if (this.characterClass === 'shadow_lord') {
+        if (this.jobTier < 3) {
+          this.scene.combat.floatText(this.x, this.y - 45, '필살기는 3차 전직(3번 키) 후 사용 가능합니다!', '#ff6b6b', 14);
+          return;
+        }
+        if (time < this.shadowUltCooldownUntil) {
+          const remainingSec = ((this.shadowUltCooldownUntil - time) / 1000).toFixed(1);
+          this.scene.combat.floatText(this.x, this.y - 45, `필살기 쿨타임: ${remainingSec}초 남음`, '#ff9f43', 14);
+          return;
+        }
+        this.shadowUltCooldownUntil = time + 45000;
+        this.nextAttack = time + 3800;
+        this.scene.combat.fireShadowUltimate(this);
       }
     }
   }
