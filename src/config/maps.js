@@ -14,7 +14,10 @@ export const MAPS = {
     theme: { skyTop: 0x6ec6f5, skyBottom: 0xd8f1ff, hill: 0x9bd68a, cloud: 0xffffff, groundTint: 0xffffff, decor: 'house', decorGap: 380 },
     platforms: [[620, 380, 200], [1100, 370, 220]],
     monsters: [], // 마을에는 몬스터 없음 (평화로운 안전지대)
-    npcs: [{ id: 'elder', x: 820, name: '장로 타키' }],
+    npcs: [
+      { id: 'elder', x: 680, name: '장로 타키', title: '마을 장로', texture: 'npc_elder', role: 'quest1' },
+      { id: 'researcher', x: 1320, name: '학자 포포', title: '버섯 연구원', texture: 'npc_researcher', role: 'quest2' }
+    ],
     portals: [
       { x: 70, label: '마을 밖 (봉쇄됨)', to: null },
       { x: 1730, label: '초록 숲', to: { map: 'map02', x: 170 } }

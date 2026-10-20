@@ -24,7 +24,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.rKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 
     // 직업 시스템: 'shinobi' (시노비: 원거리 표창/쿠나이) | 'shadow_lord' (그림자 군주)
-    this.characterClass = 'shinobi';
+    const isChannel2 = (typeof window !== 'undefined' && window.currentChannel === 2);
+    this.characterClass = isChannel2 ? 'shadow_lord' : 'shinobi';
+    if (this.characterClass === 'shadow_lord' && scene.textures.exists('player_shadow_lord')) {
+      this.setTexture('player_shadow_lord');
+    }
     this.shadowUltCooldownUntil = 0;
 
     // 키보드 캡처 방지: 브라우저 기본 키 이벤트(Space, Arrow, Backspace 등)를 가로채지 않도록 해제
@@ -49,7 +53,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.skill2CooldownUntil = 0; // 2차 스킬 추가 쿨타임 (10초)
 
     // 무기 설정
-    this.selectedWeapon = 'shuriken'; // 'shuriken' | 'kunai'
+    this.selectedWeapon = (this.characterClass === 'shadow_lord') ? 'shadow_armory' : 'shuriken';
     this.isTelekinesisMode = false;
 
     // 캐릭터 외형 커스터마이징 및 머리 위 칭호/닉네임 태그 (메이플 스타일)
@@ -70,7 +74,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(25);
 
-    // 캐릭터 주변을 염동력으로 호위/공전하는 표창 4기 (필드 최대 4개 제한 연동)
+    // 캐릭터 주변을 염동력으로 호위/공전하는 표창 4기 (시노비 전용, 그림자군주는 숨김)
     this.orbitShurikens = [];
     this.orbitCount = 4;     // 최대 4개만 비행 및 조종 가능하도록 밸런스 엄격 동기화
     this.orbitAngle = 0;
@@ -83,14 +87,45 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         .setScale(0.72)
         .setAlpha(0.85)
         .setTint(0x00ffff);
+      if (this.characterClass === 'shadow_lord') s.setVisible(false);
       this.orbitShurikens.push(s);
     }
   }
 
-  setCustomAppearance(nickname = '', title = '', colorTheme = 'default', weapon = 'shuriken') {
-    if (this.nameTag) this.nameTag.setText(nickname || '시노비');
-    if (this.titleTag) this.titleTag.setText(title ? `[${title}]` : '');
+  setCustomAppearance(nickname = '', title = '', colorTheme = 'default', weapon = 'shuriken', targetClass = null) {
+    const isChannel2 = (typeof window !== 'undefined' && window.currentChannel === 2);
+    if (isChannel2) {
+      this.characterClass = 'shadow_lord';
+    } else if (targetClass) {
+      this.characterClass = targetClass;
+    }
 
+    const isShadow = (this.characterClass === 'shadow_lord');
+
+    if (this.nameTag) {
+      this.nameTag.setText(nickname || (isShadow ? '그림자군주' : '시노비'));
+    }
+    if (this.titleTag) {
+      const defaultTitle = isShadow ? '그림자의 계승자' : '초보 시노비';
+      this.titleTag.setText(`[${title || defaultTitle}]`);
+    }
+
+    if (isShadow) {
+      if (this.scene.textures.exists('player_shadow_lord')) {
+        this.setTexture('player_shadow_lord');
+      }
+      this.clearTint();
+      this.selectedWeapon = 'shadow_armory';
+      if (this.orbitShurikens) {
+        this.orbitShurikens.forEach(s => s.setVisible(false));
+      }
+      return;
+    }
+
+    // 시노비인 경우
+    if (this.scene.textures.exists('player')) {
+      this.setTexture('player');
+    }
     const themeColors = {
       default: null,
       black: null,
@@ -111,29 +146,35 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.selectedWeapon = weapon;
       }
     }
+    if (this.orbitShurikens) {
+      this.orbitShurikens.forEach(s => s.setVisible(true));
+    }
   }
 
   setJobTier(tier) {
     this.jobTier = tier;
     if (this.characterClass === 'shadow_lord') {
       if (tier === 1) {
-        this.scene.combat.floatText(this.x, this.y - 50, '【견습 그림자 검사】 불완전 잔영 사출 (최대 2인 타격)', '#a55eea', 16);
+        this.scene.combat.floatText(this.x, this.y - 50, '【견습 그림자 검사】 (Lv.1~29) 불완전 잔영 사출 (최대 2인 타격)', '#a55eea', 16);
       } else if (tier === 2) {
-        this.scene.combat.floatText(this.x, this.y - 50, '【1차: 그림자 추적자】 단검 4연타 + 사슬낫 견인 (최대 4인 타격)', '#e056fd', 16);
+        this.scene.combat.floatText(this.x, this.y - 50, '【1차: 그림자 추적자】 (Lv.30~69) 단검 3연타 + 사슬낫 견인 (최대 4인 타격)', '#00d2d3', 16);
       } else if (tier === 3) {
-        this.scene.combat.floatText(this.x, this.y - 50, '【2차: 그림자 지휘관】 대검 에어본 + 창 관통 돌파 (최대 5인 타격)', '#feca57', 16);
+        this.scene.combat.floatText(this.x, this.y - 50, '【2차: 그림자 지휘관】 (Lv.70~109) 대검 슈퍼아머 + 창 관통 돌진 (최대 5인 타격)', '#feca57', 16);
       } else {
-        this.scene.combat.floatText(this.x, this.y - 50, '【3차: 그림자 군주】 언월도 흡입 + 도끼 단죄, 6인 편제 (최대 6인 타격, [R]필살기)', '#ff4757', 16);
+        this.scene.combat.floatText(this.x, this.y - 50, '【3차: 그림자 군주】 (Lv.110~120) 언월도 에어본 + 도끼 방어분쇄, 6인 편제 (최대 6인 타격, [R]필살기)', '#ff4757', 16);
       }
       return;
     }
+    // 시노비
     if (tier === 1) {
-      this.selectedWeapon = 'shuriken'; // 1차는 표창만 가능
-      this.scene.combat.floatText(this.x, this.y - 50, '【1차 시노비】 전직: 표창만 가능 (2명 이하 타격)', '#00d2d3', 16);
+      this.selectedWeapon = 'shuriken'; // 견습은 표창만 가능
+      this.scene.combat.floatText(this.x, this.y - 50, '【견습 시노비】 (Lv.1~29) 원거리 표창술 (최대 2인 타격)', '#a4b0be', 16);
     } else if (tier === 2) {
-      this.scene.combat.floatText(this.x, this.y - 50, '【2차 듀얼시노비】 전직: 표창+쿠나이 (3명 타격, 꽂힌 무기 회수, [A]바람스킬 쿨10초)', '#feca57', 15);
+      this.scene.combat.floatText(this.x, this.y - 50, '【1차 전직: 정식 시노비】 (Lv.30~69) 표창+쿠나이 해금 (최대 4인 타격)', '#00d2d3', 16);
     } else if (tier === 3) {
-      this.scene.combat.floatText(this.x, this.y - 50, '【3차 풍마대장군】 전직: 거대 쿠나이 & 대형 풍마표창 (최대 5인 타격)', '#ff4757', 16);
+      this.scene.combat.floatText(this.x, this.y - 50, '【2차 전직: 듀얼시노비】 (Lv.70~109) 바람스킬 & 꽂힌무기 회수 (최대 5인 타격)', '#feca57', 16);
+    } else {
+      this.scene.combat.floatText(this.x, this.y - 50, '【3차 전직: 풍마대장군】 (Lv.110~120) 거대 쿠나이 & 대형 풍마표창 (최대 6인 타격)', '#ff4757', 16);
     }
   }
 
@@ -162,16 +203,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // 0. 전직 차수 즉시 변경 (1 / 2 / 3 숫자키: 1차 시노비 / 2차 듀얼시노비 / 3차 풍마대장군)
+    // 0. 전직 차수 즉시 변경 (1: 견습 / 2: 1차(Lv.30) / 3: 2차(Lv.70) / 4: 3차(Lv.110))
     if (Phaser.Input.Keyboard.JustDown(this.key1)) this.setJobTier(1);
     if (Phaser.Input.Keyboard.JustDown(this.key2)) this.setJobTier(2);
     if (Phaser.Input.Keyboard.JustDown(this.key3)) this.setJobTier(3);
+    if (Phaser.Input.Keyboard.JustDown(this.key4)) this.setJobTier(4);
 
-    // 1. 무기 전환 (C 키) - 1차는 표창만 사용 가능, 2차부터 쿠나이 가능
+    // 1. 무기 전환 (C 키) - 시노비: 견습(tier 1)은 표창만 사용 가능, 1차 전직(tier >= 2, Lv.30)부터 쿠나이 가능
     if (Phaser.Input.Keyboard.JustDown(this.cKey)) {
-      if (this.jobTier === 1) {
+      if (this.characterClass === 'shadow_lord') {
+        this.scene.combat.floatText(this.x, this.y - 45, '그림자 군주는 전용 6종 분신 무기군을 전담 운용합니다!', '#a55eea', 15);
+      } else if (this.jobTier === 1) {
         this.selectedWeapon = 'shuriken';
-        this.scene.combat.floatText(this.x, this.y - 45, '1차는 표창만 사용 가능합니다! (2차 전직 필요: [2]키)', '#ff6b6b', 14);
+        this.scene.combat.floatText(this.x, this.y - 45, '견습 시노비는 표창만 사용 가능합니다! (1차 전직 필요: Lv.30)', '#ff6b6b', 14);
       } else {
         this.selectedWeapon = (this.selectedWeapon === 'shuriken') ? 'kunai' : 'shuriken';
         const weaponName = this.selectedWeapon === 'shuriken' ? '표창' : '쿠나이';
@@ -444,16 +488,29 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.hp = this.maxHp;
     this.mp = this.maxMp;
 
-    // 30레벨 2차 전직, 70레벨 3차 풍마대장군 전직 적용
-    if (level >= 70 && this.jobTier < 3) {
+    // 전직 체계: 1차(Lv.30) -> 2차(Lv.70) -> 3차(Lv.110)
+    // 10레벨에서는 절대 2차/3차 전직하지 않음 (맛보기 스킬 안내만 출력)
+    if (level >= 110 && this.jobTier < 4) {
+      this.setJobTier(4);
+      if (this.scene && this.scene.combat) {
+        const jobName = this.characterClass === 'shadow_lord' ? '【3차: 그림자 군주】' : '【3차: 풍마대장군】';
+        this.scene.combat.floatText(this.x, this.y - 70, `★ 110레벨 달성 - ${jobName} 전직! (최대 6인 타격 해금) ★`, '#ff4757', 22);
+      }
+    } else if (level >= 70 && this.jobTier < 3) {
       this.setJobTier(3);
       if (this.scene && this.scene.combat) {
-        this.scene.combat.floatText(this.x, this.y - 70, '★ 축하합니다! 70레벨 달성 - 【3차 풍마대장군】 전직! ★', '#ff4757', 20);
+        const jobName = this.characterClass === 'shadow_lord' ? '【2차: 그림자 지휘관】' : '【2차: 듀얼시노비】';
+        this.scene.combat.floatText(this.x, this.y - 70, `★ 70레벨 달성 - ${jobName} 전직! (최대 5인 타격 해금) ★`, '#feca57', 22);
       }
     } else if (level >= 30 && this.jobTier < 2) {
       this.setJobTier(2);
       if (this.scene && this.scene.combat) {
-        this.scene.combat.floatText(this.x, this.y - 70, '★ 축하합니다! 30레벨 달성 - 【2차 듀얼시노비】 전직! ★', '#feca57', 20);
+        const jobName = this.characterClass === 'shadow_lord' ? '【1차: 그림자 추적자】' : '【1차: 정식 시노비】';
+        this.scene.combat.floatText(this.x, this.y - 70, `★ 30레벨 달성 - ${jobName} 전직! (최대 4인 타격 해금) ★`, '#00d2d3', 20);
+      }
+    } else if (level === 10) {
+      if (this.scene && this.scene.combat) {
+        this.scene.combat.floatText(this.x, this.y - 70, '★ 10레벨 달성! 맛보기 스킬 개방! (30레벨에 1차 전직 도전) ★', '#ffd32a', 18);
       }
     }
   }

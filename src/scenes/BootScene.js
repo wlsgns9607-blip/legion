@@ -517,6 +517,41 @@ export default class BootScene extends Phaser.Scene {
       g.fillStyle(0xf39c12).fillCircle(45, 24, 5);
     });
 
+    // 메이플스토리 스타일 마을 퀘스트 2 전담 NPC [학자 포포] (56 x 72)
+    tex('npc_researcher', 56, 72, g => {
+      // 그림자
+      g.fillStyle(0x000000, 0.25).fillEllipse(28, 68, 44, 8);
+      // 신발 / 하의
+      g.fillStyle(0x2d3436).fillRoundedRect(16, 56, 10, 12, 2);
+      g.fillStyle(0x2d3436).fillRoundedRect(30, 56, 10, 12, 2);
+      // 연구원 가운 (흰색 & 에메랄드 안감)
+      g.fillStyle(0x1dd1a1).fillRoundedRect(14, 34, 28, 24, 4);
+      g.fillStyle(0xf5f6fa).fillRect(16, 36, 24, 22);
+      // 붉은 리본 넥타이
+      g.fillStyle(0xe74c3c).fillTriangle(28, 36, 23, 44, 33, 44);
+
+      // 얼굴 피부
+      g.fillStyle(0xffdfba).fillRoundedRect(14, 16, 28, 22, 6);
+      // 동글이 안경
+      g.lineStyle(2, 0x2c3e50).strokeCircle(21, 25, 5.5).strokeCircle(35, 25, 5.5);
+      g.lineStyle(2, 0x2c3e50).lineBetween(26, 25, 30, 25);
+      // 초롱초롱한 눈
+      g.fillStyle(0x0984e3).fillCircle(21, 25, 2.5).fillCircle(35, 25, 2.5);
+      g.fillStyle(0xffffff).fillCircle(22, 24, 1).fillCircle(36, 24, 1);
+      // 발그레한 볼터치
+      g.fillStyle(0xff7675, 0.4).fillCircle(16, 29, 3).fillCircle(40, 29, 3);
+
+      // 귀여운 초록색 학사모 / 버섯 갓 모자
+      g.fillStyle(0x27ae60).fillEllipse(28, 14, 44, 16);
+      g.fillStyle(0x2ecc71).fillCircle(28, 10, 12);
+      // 모자의 노란 방울
+      g.fillStyle(0xf1c40f).fillCircle(28, 4, 3.5);
+
+      // 연구 노트 / 돋보기
+      g.fillStyle(0x8a6240).fillRoundedRect(40, 36, 12, 16, 2);
+      g.fillStyle(0xf1c40f).fillRect(42, 38, 8, 12);
+    });
+
     // 퀘스트 시작 가능 느낌표 말풍선 [!] (32 x 32)
     tex('quest_icon_start', 32, 32, g => {
       // 둥근 전구/말풍선 배경

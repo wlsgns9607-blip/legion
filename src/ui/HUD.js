@@ -66,23 +66,32 @@ export default class HUD {
 
     if (isShadow) {
       if (tier === 1) {
-        tierName = `👑 [그림자 군주] 견습: 불완전 잔영 (최대 2인)`;
+        tierName = `👑 [견습 그림자 검사] (Lv.1~29, 최대 2인 타격)`;
         tierColor = '#a55eea';
       } else if (tier === 2) {
-        tierName = `👑 [그림자 군주] 1차: 그림자 추적자 (단검+사슬낫, 최대 4인)`;
-        tierColor = '#e056fd';
+        tierName = `👑 [1차: 그림자 추적자] (Lv.30~69, 단검+사슬낫, 최대 4인)`;
+        tierColor = '#00d2d3';
       } else if (tier === 3) {
-        tierName = `👑 [그림자 군주] 2차: 그림자 지휘관 (대검+창, 최대 5인)`;
+        tierName = `👑 [2차: 그림자 지휘관] (Lv.70~109, 대검+창, 최대 5인)`;
         tierColor = '#feca57';
       } else {
-        tierName = `👑 [그림자 군주] 3차: 그림자 군주 (언월도+도끼, 6인 완성, 최대 6인)`;
+        tierName = `👑 [3차: 그림자 군주] (Lv.110~120, 언월도+도끼, 최대 6인)`;
         tierColor = '#ff4757';
       }
     } else {
-      if (tier === 1) tierName = `1차: 시노비 (Lv.30 2차 전직)`;
-      else if (tier === 2) tierName = `2차: 듀얼시노비 (Lv.70 3차 전직)`;
-      else tierName = `3차: 풍마대장군 (최고 차수)`;
-      tierColor = tier === 1 ? '#00d2d3' : (tier === 2 ? '#feca57' : '#ff4757');
+      if (tier === 1) {
+        tierName = `견습 시노비 (Lv.1~29, 최대 2인 타격)`;
+        tierColor = '#a4b0be';
+      } else if (tier === 2) {
+        tierName = `1차: 정식 시노비 (Lv.30~69, 표창+쿠나이, 최대 4인)`;
+        tierColor = '#00d2d3';
+      } else if (tier === 3) {
+        tierName = `2차: 듀얼시노비 (Lv.70~109, 바람스킬, 최대 5인)`;
+        tierColor = '#feca57';
+      } else {
+        tierName = `3차: 풍마대장군 (Lv.110~120, 대형풍마, 최대 6인)`;
+        tierColor = '#ff4757';
+      }
     }
 
     this.tierBadge.setText(tierName).setColor(tierColor);
@@ -98,20 +107,30 @@ export default class HUD {
     this.kills.setText(`누적 처치 ${kills}`);
     this.death.setVisible(player.isDead);
 
-    // 퀘스트 상태 표시
+    // 퀘스트 상태 표시 (퀘스트 1 & 퀘스트 2)
     if (quest) {
-      if (quest.status === 'NOT_STARTED') {
+      const st = quest.status;
+      if (st === 'NOT_STARTED') {
         this.questTitle.setText('📜 [퀘스트 1] 초록 숲 정화').setColor('#ffd166');
-        this.questProgress.setText('마을의 [장로 타키]에게 대화 [Space]').setColor('#dfe6e9');
-      } else if (quest.status === 'IN_PROGRESS') {
+        this.questProgress.setText('마을 [장로 타키]에게 대화 [Space]').setColor('#dfe6e9');
+      } else if (st === 'IN_PROGRESS' || st === 'Q1_IN_PROGRESS') {
         this.questTitle.setText('📜 [퀘스트 1] 초록 숲 정화').setColor('#ffd166');
-        this.questProgress.setText(`초록 숲 몬스터 처치: [${quest.kills} / ${quest.targetCount}]`).setColor('#1dd1a1');
-      } else if (quest.status === 'READY_TO_COMPLETE') {
+        this.questProgress.setText(`초록 숲 몬스터 처치: [${quest.kills} / ${quest.targetCount || 30}]`).setColor('#1dd1a1');
+      } else if (st === 'READY_TO_COMPLETE') {
         this.questTitle.setText('🎉 [퀘스트 1] 30마리 완료!').setColor('#ff9f43');
         this.questProgress.setText('★ 마을 [장로 타키]에게 보고! ★').setColor('#ffd32a');
-      } else {
-        this.questTitle.setText('✔ [퀘스트 1] 정화 완료').setColor('#70a1ff');
-        this.questProgress.setText('보상 수령 완료 (350 EXP 지급됨)').setColor('#a4b0be');
+      } else if (st === 'COMPLETED' || st === 'Q1_COMPLETED' || st === 'Q2_NOT_STARTED') {
+        this.questTitle.setText('📜 [퀘스트 2] 버섯 군락지 대기').setColor('#ffd166');
+        this.questProgress.setText('마을 [장로 타키]에게 대화 [Space]').setColor('#a29bfe');
+      } else if (st === 'Q2_IN_PROGRESS') {
+        this.questTitle.setText('📜 [퀘스트 2] 버섯 50마리 처치').setColor('#e056fd');
+        this.questProgress.setText(`버섯 처치: [${quest.kills} / 50]`).setColor('#55efc4');
+      } else if (st === 'Q2_READY') {
+        this.questTitle.setText('🎉 [퀘스트 2] 50마리 완료!').setColor('#ff9f43');
+        this.questProgress.setText('★ 마을 [장로 타키]에게 보고! ★').setColor('#ffd32a');
+      } else if (st === 'Q2_COMPLETED') {
+        this.questTitle.setText('✔ [퀘스트 2] 버섯 퇴치 완료').setColor('#70a1ff');
+        this.questProgress.setText('모든 퀘스트 정복 완료 (+800 EXP)').setColor('#a4b0be');
       }
     }
 
@@ -171,7 +190,7 @@ export default class HUD {
         } else if (activeWeapons.length > 0) {
           this.telekenesisBadge.setText(`공중 무기 ${activeWeapons.length}기 대기 중 (Shift 누르면 조종, Z 회수)`).setColor('#7ee8fa').setVisible(true);
         } else {
-          this.telekenesisBadge.setText('Lv.30 2차 듀얼시노비, Lv.70 3차 풍마대장군 전직 ([1/2/3]키)').setColor('#a4b0be').setVisible(true);
+          this.telekenesisBadge.setText('전직: 1차(Lv.30) ➔ 2차(Lv.70) ➔ 3차(Lv.110) [단축키: 1/2/3/4]').setColor('#a4b0be').setVisible(true);
         }
       }
     }

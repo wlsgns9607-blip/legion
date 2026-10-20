@@ -143,52 +143,73 @@ export const SHADOW_LORD = {
       tier: 1,
       name: '견습 그림자 검사',
       reqLevel: 1,
-      maxTargets: 2,       // Lv.1~29: 불완전 잔영 사출 / 최대 2인 동시 타격
+      maxTargets: 2,       // Lv.1~29: 최대 2인 동시 타격
       activeClones: 0,
-      skills: ['SKL_SHD_01', 'SKL_SHD_02'],
-      desc: '불완전 잔영 사출 (최대 2인 타격)'
+      skills: ['SKILL_01', 'SKILL_02', 'SKILL_03'],
+      desc: '그림자 3단 베기, 암영 돌진, 불완전 잔영 (최대 2인 타격)'
     },
     2: {
       tier: 2,
       name: '1차: 그림자 추적자 (단검+사슬낫)',
       reqLevel: 30,
-      maxTargets: 4,       // Lv.30: 단검(기습 연타) + 사슬낫(견인 제어) / 최대 4인 동시 타격
+      maxTargets: 4,       // Lv.30~69: 최대 4인 동시 타격
       activeClones: 2,
       weapons: ['dagger', 'kusarigama'],
-      skills: ['SKL_SHD_11', 'SKL_SHD_12'],
-      desc: '단검(기습 4연격) + 사슬낫(중거리 견인), 최대 4인 타격'
+      skills: ['SKILL_04', 'SKILL_05'],
+      desc: '암영습(단검 3연격) + 쇄겸포환(사슬낫 PULL 끌어당김), 최대 4인 타격'
     },
     3: {
       tier: 3,
       name: '2차: 그림자 지휘관 (대검+창)',
       reqLevel: 70,
-      maxTargets: 5,       // Lv.70: 대검(슈퍼아머 횡베기) + 창(직선 돌진 관통) / 최대 5인 동시 타격
+      maxTargets: 5,       // Lv.70~109: 최대 5인 동시 타격
       activeClones: 4,
-      weapons: ['dagger', 'kusarigama', 'greatsword', 'lance'],
-      skills: ['SKL_SHD_21', 'SKL_SHD_22'],
-      desc: '대검(에어본 횡베기) + 창(직선관통 돌진), 최대 5인 타격'
+      weapons: ['dagger', 'kusarigama', 'greatsword', 'spear'],
+      skills: ['SKILL_06', 'SKILL_07'],
+      desc: '흑참단두(대검 슈퍼아머 횡베기) + 혈영일섬(창 8U 직선관통 넉백), 최대 5인 타격'
     },
     4: {
       tier: 4,
       name: '3차: 그림자 군주 (언월도+도끼)',
       reqLevel: 110,
-      maxTargets: 6,       // Lv.110: 언월도(광역 회전) + 도끼(수직 강타 방어분쇄) / 6인 편제 완성 / 최대 6인 동시 타격
+      maxTargets: 6,       // Lv.110~120: 최대 6인 동시 타격
       activeClones: 6,
-      weapons: ['dagger', 'kusarigama', 'greatsword', 'lance', 'glaive', 'axe'],
-      skills: ['SKL_SHD_31', 'SKL_SHD_32', 'SKL_SHD_ULT'],
-      desc: '언월도(광역 회전 흡입) + 도끼(방어 분쇄 강타), 6인 분신 편제, 최대 6인 타격'
+      weapons: ['dagger', 'kusarigama', 'greatsword', 'spear', 'guandao', 'axe'],
+      skills: ['SKILL_08', 'SKILL_09', 'SKILL_10'],
+      desc: '청룡선풍(언월도 360도 에어본) + 파천붕괴(도끼 방어력 30% 분쇄) + 묵영섬멸진(합동 필살기), 최대 6인 타격'
     }
   },
   skills: {
-    SKL_SHD_01: { id: 'SKL_SHD_01', name: '잔영격', cooldown: 0, mp: 0, maxTargets: 2, width: 140, height: 90, damageMult: 1.8 },
-    SKL_SHD_02: { id: 'SKL_SHD_02', name: '그림자 밟기', cooldown: 5000, mp: 15, maxTargets: 2, width: 180, height: 90, damageMult: 2.5 },
-    SKL_SHD_11: { id: 'SKL_SHD_11', name: '쌍단 급습', cooldown: 4000, mp: 25, maxTargets: 4, width: 160, height: 100, damageMult: 3.2, bleed: true },
-    SKL_SHD_12: { id: 'SKL_SHD_12', name: '사슬 포박', cooldown: 6500, mp: 35, maxTargets: 4, width: 280, height: 110, damageMult: 2.8, pull: true },
-    SKL_SHD_21: { id: 'SKL_SHD_21', name: '단절 대검', cooldown: 7000, mp: 50, maxTargets: 5, width: 260, height: 140, damageMult: 4.5, airborne: true },
-    SKL_SHD_22: { id: 'SKL_SHD_22', name: '나선 돌파', cooldown: 9000, mp: 60, maxTargets: 5, width: 340, height: 90, damageMult: 4.6, pierce: true },
-    SKL_SHD_31: { id: 'SKL_SHD_31', name: '풍마 언월참', cooldown: 10000, mp: 70, maxTargets: 6, width: 300, height: 200, damageMult: 5.2, vacuum: true },
-    SKL_SHD_32: { id: 'SKL_SHD_32', name: '단죄의 대부', cooldown: 13000, mp: 85, maxTargets: 6, width: 240, height: 220, damageMult: 6.0, stun: true },
-    SKL_SHD_ULT: { id: 'SKL_SHD_ULT', name: '군주의 영토 : 육익 섬멸진', cooldown: 45000, mp: 100, maxTargets: 6, width: 620, height: 320, damageMult: 18.0 }
+    // 1. 견습 구간 (Lv.1~29 / 최대 2인 타격)
+    SKILL_01: { id: 'SKILL_01', name: '그림자 3단 베기', tier: 'NOVICE', reqLevel: 1, weapon: 'NONE', maxTargets: 2, cooldown: 0, mp: 0, width: 96, height: 64, offsetX: 32, offsetY: 0, damageMult: 1.5, ccType: 'NONE', ccDuration: 0 },
+    SKILL_02: { id: 'SKILL_02', name: '암영 돌진 베기', tier: 'NOVICE', reqLevel: 1, weapon: 'NONE', maxTargets: 2, cooldown: 4.5, mp: 15, width: 160, height: 64, offsetX: 80, offsetY: 0, damageMult: 2.2, ccType: 'NONE', ccDuration: 0 },
+    SKILL_03: { id: 'SKILL_03', name: '불완전한 잔영', tier: 'NOVICE', reqLevel: 10, weapon: 'NONE', maxTargets: 2, cooldown: 6.0, mp: 20, width: 128, height: 80, offsetX: 64, offsetY: 0, damageMult: 2.6, ccType: 'NONE', ccDuration: 0 },
+
+    // 2. 1차 전직 (Lv.30~69 / 최대 4인 타격)
+    SKILL_04: { id: 'SKILL_04', name: '암영습(暗影襲)', tier: 'TIER_1', reqLevel: 30, weapon: 'DAGGER', maxTargets: 4, cooldown: 5.0, mp: 30, width: 160, height: 96, offsetX: 48, offsetY: 0, damageMult: 3.4, ccType: 'NONE', ccDuration: 0 },
+    SKILL_05: { id: 'SKILL_05', name: '쇄겸포환(鎖鎌捕環)', tier: 'TIER_1', reqLevel: 30, weapon: 'CHAIN_SICKLE', maxTargets: 4, cooldown: 7.0, mp: 40, width: 320, height: 128, offsetX: 120, offsetY: 0, damageMult: 3.0, ccType: 'PULL', ccDuration: 0.8 },
+
+    // 3. 2차 전직 (Lv.70~109 / 최대 5인 타격)
+    SKILL_06: { id: 'SKILL_06', name: '흑참단두(黑斬斷頭)', tier: 'TIER_2', reqLevel: 70, weapon: 'GREATSWORD', maxTargets: 5, cooldown: 8.0, mp: 55, width: 256, height: 160, offsetX: 96, offsetY: 0, damageMult: 4.8, ccType: 'NONE', ccDuration: 0, superArmor: true },
+    SKILL_07: { id: 'SKILL_07', name: '혈영일섬(血影一閃)', tier: 'TIER_2', reqLevel: 70, weapon: 'SPEAR', maxTargets: 5, cooldown: 9.5, mp: 65, width: 512, height: 80, offsetX: 256, offsetY: 0, damageMult: 4.6, ccType: 'KNOCKBACK', ccDuration: 0.6 },
+
+    // 4. 3차 전직 (Lv.110~120 / 최대 6인 타격)
+    SKILL_08: { id: 'SKILL_08', name: '청룡선풍(靑龍旋風)', tier: 'TIER_3', reqLevel: 110, weapon: 'GUANDAO', maxTargets: 6, cooldown: 11.0, mp: 75, width: 360, height: 240, offsetX: 0, offsetY: 0, damageMult: 5.4, ccType: 'AIRBORNE', ccDuration: 1.2 },
+    SKILL_09: { id: 'SKILL_09', name: '파천붕괴(破天崩壞)', tier: 'TIER_3', reqLevel: 110, weapon: 'AXE', maxTargets: 6, cooldown: 13.0, mp: 85, width: 280, height: 260, offsetX: 110, offsetY: 0, damageMult: 6.2, ccType: 'DEF_SHRED', ccDuration: 5.0, defShredPercent: 0.30 },
+
+    // 5. 최종 결전기 (필살기 / 3.5초 4단계 합동 섬멸 / 최대 6인 타격)
+    SKILL_10: { id: 'SKILL_10', name: '군단집결 · 묵영섬멸진(默影殲滅陣)', tier: 'ULTIMATE', reqLevel: 110, weapon: 'ALL_6_WEAPONS', maxTargets: 6, cooldown: 45.0, mp: 100, width: 720, height: 400, offsetX: 0, offsetY: 0, damageMult: 20.0, ccType: 'STUN', ccDuration: 3.5 },
+
+    // 기존 식별자 호환성 별칭 (Legacy Aliases)
+    SKL_SHD_01: { id: 'SKILL_01', name: '그림자 3단 베기', maxTargets: 2, width: 96, height: 64, damageMult: 1.5 },
+    SKL_SHD_02: { id: 'SKILL_02', name: '암영 돌진 베기', maxTargets: 2, width: 160, height: 64, damageMult: 2.2 },
+    SKL_SHD_11: { id: 'SKILL_04', name: '암영습(暗影襲)', maxTargets: 4, width: 160, height: 96, damageMult: 3.4 },
+    SKL_SHD_12: { id: 'SKILL_05', name: '쇄겸포환(鎖鎌捕環)', maxTargets: 4, width: 320, height: 128, damageMult: 3.0, pull: true },
+    SKL_SHD_21: { id: 'SKILL_06', name: '흑참단두(黑斬斷頭)', maxTargets: 5, width: 256, height: 160, damageMult: 4.8 },
+    SKL_SHD_22: { id: 'SKILL_07', name: '혈영일섬(血影一閃)', maxTargets: 5, width: 512, height: 80, damageMult: 4.6, pierce: true },
+    SKL_SHD_31: { id: 'SKILL_08', name: '청룡선풍(靑龍旋風)', maxTargets: 6, width: 360, height: 240, damageMult: 5.4, airborne: true },
+    SKL_SHD_32: { id: 'SKILL_09', name: '파천붕괴(破天崩壞)', maxTargets: 6, width: 280, height: 260, damageMult: 6.2, defShred: true },
+    SKL_SHD_ULT: { id: 'SKILL_10', name: '군단집결 · 묵영섬멸진', maxTargets: 6, width: 720, height: 400, damageMult: 20.0 }
   }
 };
 
@@ -210,7 +231,7 @@ export const QUEST_CONFIG = {
 };
 
 export const MONSTER = {
-  hp: 40, speed: 70, contactDamage: 10, exp: 12,
+  hp: 40, speed: 70, contactDamage: 10, exp: 24,
   aggroRange: 420, stopRange: 24, respawnMs: 4000,
   spawnXs: [500, 800, 1200, 1600, 2000]
 };
@@ -219,58 +240,69 @@ export const MONSTER = {
 export const MONSTER_TYPES = {
   normal: {
     name: '포동 슬라임',
-    hp: 40, speed: 70, contactDamage: 10, exp: 12,
+    level: 2,
+    hp: 40, speed: 70, contactDamage: 10, exp: 24,
     texture: 'monster', scale: 1.0, respawnMs: 4000
   },
   mushroom: {
     name: '버섯 포자몬',
-    hp: 85, speed: 75, contactDamage: 14, exp: 22,
+    level: 14,
+    hp: 85, speed: 75, contactDamage: 14, exp: 45,
     texture: 'monster_mushroom', scale: 1.05, respawnMs: 4200
   },
   ruin_ghost: {
     name: '유적 망령',
-    hp: 150, speed: 80, contactDamage: 18, exp: 35,
+    level: 22,
+    hp: 150, speed: 80, contactDamage: 18, exp: 70,
     texture: 'monster_ghost', scale: 1.1, respawnMs: 4500
   },
   shadow_beast: {
     name: '그림자 야수',
-    hp: 240, speed: 95, contactDamage: 24, exp: 50,
+    level: 28,
+    hp: 240, speed: 95, contactDamage: 24, exp: 100,
     texture: 'monster_shadow', scale: 1.15, respawnMs: 4800
   },
   boss_rabbit: {
     name: '[보스] 토끼 장군',
+    level: 30,
     hp: 3500, speed: 110, contactDamage: 40, exp: 1200,
     texture: 'monster_boss_rabbit', scale: 1.6, respawnMs: 15000,
     isBoss: true, title: '달빛 제단의 수호자'
   },
   clay_soldier: {
     name: '고대 토우 병사',
+    level: 35,
     hp: 360, speed: 80, contactDamage: 28, exp: 75,
     texture: 'monster_clay_soldier', scale: 1.1, respawnMs: 4200
   },
   ruin_bat: {
     name: '유적 동굴 박쥐',
+    level: 38,
     hp: 260, speed: 125, contactDamage: 32, exp: 85,
     texture: 'monster_ruin_bat', scale: 1.0, fly: true, respawnMs: 4000
   },
   shell_snail: {
     name: '침식 껍질 달팽이',
+    level: 50,
     hp: 750, speed: 65, contactDamage: 36, exp: 160,
     texture: 'monster_shell_snail', scale: 1.25, respawnMs: 4500
   },
   mud_spitter: {
     name: '침식 진흙괴',
+    level: 55,
     hp: 580, speed: 85, contactDamage: 42, exp: 180,
     texture: 'monster_mud_spitter', scale: 1.2, respawnMs: 4500
   },
   golem_elite: {
     name: '[정예] 고대 석상 골렘',
+    level: 65,
     hp: 1800, speed: 60, contactDamage: 55, exp: 500,
     texture: 'monster_golem_elite', scale: 1.5, respawnMs: 8000,
     isElite: true
   },
   boss_saojung: {
     name: '[대보스] 달팽이 사오정 장군',
+    level: 70,
     hp: 15000, speed: 95, contactDamage: 75, exp: 8000,
     texture: 'monster_boss_saojung', scale: 2.1, respawnMs: 25000,
     isBoss: true, title: '침식의 군주'
@@ -285,8 +317,45 @@ export const POTION = {
 };
 
 export const LEVEL = {
-  maxLevel: 70,                        // 최대 70레벨 확장 (Lv.70 결전 및 대장군 전직)
-  baseExp: 18, growth: 1.45,           // 70레벨까지 호쾌하고 몰입감 있는 레벨업 곡선
-  hpPerLevel: 14, mpPerLevel: 10, damagePerLevel: 3
+  maxLevel: 120,                        // 최대 120레벨 확장 (3차 및 엔드 콘텐츠)
+  hpPerLevel: 18,
+  mpPerLevel: 12,
+  damagePerLevel: 3,
+
+  // 레벨 구간별 수학적 필요 경험치 (사양서 공식 연동)
+  getRequiredExp(level) {
+    if (level >= 120) return 0;
+    // 구간 A: Lv.1 ~ Lv.10 (초고속 구간)
+    if (level <= 10) {
+      return Math.floor(16 * Math.pow(level, 1.28));
+    }
+    // 구간 B: Lv.11 ~ Lv.29 (2인 타격 쾌적 견습 구간)
+    if (level <= 29) {
+      return Math.floor(120 + 28 * Math.pow(level - 10, 1.52));
+    }
+    // 구간 C: Lv.30 ~ Lv.69 (4인 타격 몰이사냥 표준 구간)
+    if (level <= 69) {
+      return Math.floor(850 + 65 * Math.pow(level - 29, 1.85));
+    }
+    // 구간 D: Lv.70 ~ Lv.109 (5인 타격 심화 파밍 구간)
+    if (level <= 109) {
+      return Math.floor(6800 * Math.pow(1.055, level - 70) + 140 * Math.pow(level - 70, 2.0));
+    }
+    // 구간 E: Lv.110 ~ Lv.120 (6인 타격 엔드 정복 구간)
+    return Math.floor(75000 * Math.pow(1.135, level - 110) + 1200 * Math.pow(level - 110, 2.4));
+  },
+
+  // 레벨 차이에 따른 경험치 보정율 (Level Gap Modifier)
+  getLevelGapModifier(playerLevel, monsterLevel = 1) {
+    const delta = playerLevel - monsterLevel;
+    if (delta <= -6) return 1.15; // 상위 몬스터 도전 보너스
+    if (delta <= -4) return 1.10;
+    if (delta <= 3) return 1.00;  // 표준 골든 존 (-3 ~ +3)
+    if (delta === 4) return 0.85;
+    if (delta === 5) return 0.65;
+    if (delta === 6) return 0.45;
+    if (delta === 7) return 0.25;
+    return 0.05;                  // 8레벨 이상 학살 방지 최소치
+  }
 };
 

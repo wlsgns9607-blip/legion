@@ -224,23 +224,50 @@ export default class MapManager {
 
   saveState() {
     const s = this.scene;
+    const isChannel2 = (typeof window !== 'undefined' && window.currentChannel === 2);
+    const charClass = isChannel2 ? 'shadow_lord' : (s.player.characterClass || 'shinobi');
+    const u = (typeof window !== 'undefined') ? window.currentUser : null;
     const st = {
       level: s.xp.level, exp: s.xp.exp, hp: s.player.hp, mp: s.player.mp, kills: s.kills,
       jobTier: s.player.jobTier,
-      quest: s.quest
+      quest: s.quest,
+      characterClass: charClass,
+      selectedWeapon: (charClass === 'shadow_lord') ? 'shadow_armory' : (s.player.selectedWeapon || 'shuriken'),
+      colorTheme: (u && (u.color_theme || u.colorTheme)) || (charClass === 'shadow_lord' ? 'purple' : 'default'),
+      nickname: (u && u.nickname) || (charClass === 'shadow_lord' ? '그림자군주' : '시노비'),
+      title: (u && u.title) || (charClass === 'shadow_lord' ? '그림자의 계승자' : '초보 시노비')
     };
     s.registry.set(STATE_KEY, st);
     if (window.currentUser) {
       Object.assign(window.currentUser, {
         level: s.xp.level, exp: s.xp.exp, hp: s.player.hp, mp: s.player.mp, kills: s.kills,
         job_tier: s.player.jobTier, quest_status: s.quest ? s.quest.status : 'NOT_STARTED',
-        quest_kills: s.quest ? s.quest.kills : 0
+        quest_kills: s.quest ? s.quest.kills : 0,
+        character_class: charClass,
+        characterClass: charClass,
+        selected_weapon: st.selectedWeapon,
+        selectedWeapon: st.selectedWeapon
       });
     }
   }
 
   restoreState() {
     const s = this.scene, st = s.registry.get(STATE_KEY);
+    const u = (typeof window !== 'undefined') ? window.currentUser : null;
+    const isChannel2 = (typeof window !== 'undefined' && window.currentChannel === 2);
+    const charClass = isChannel2 ? 'shadow_lord' : ((st && st.characterClass) || (u && (u.character_class || u.characterClass)) || 'shinobi');
+    const colorTheme = (st && st.colorTheme) || (u && (u.color_theme || u.colorTheme)) || (charClass === 'shadow_lord' ? 'purple' : 'default');
+    const weapon = (charClass === 'shadow_lord') ? 'shadow_armory' : ((st && st.selectedWeapon) || (u && (u.selected_weapon || u.selectedWeapon)) || 'shuriken');
+    const nickname = (st && st.nickname) || (u && u.nickname) || (charClass === 'shadow_lord' ? '그림자군주' : '시노비');
+    const title = (st && st.title) || (u && u.title) || (charClass === 'shadow_lord' ? '그림자의 계승자' : '초보 시노비');
+
+    if (s.player) {
+      s.player.characterClass = charClass;
+      if (s.player.setCustomAppearance) {
+        s.player.setCustomAppearance(nickname, title, colorTheme, weapon, charClass);
+      }
+    }
+
     if (!st) return;
     s.xp.level = st.level;
     s.xp.exp = st.exp;

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME, MONSTER, POTION } from '../config/gameConfig.js';
+import { GAME, LEVEL, MONSTER, POTION } from '../config/gameConfig.js';
 import { START_MAP } from '../config/maps.js';
 import Player from '../entities/Player.js';
 import Monster from '../entities/Monster.js';
@@ -77,8 +77,13 @@ export default class GameScene extends Phaser.Scene {
     this.events.once('shutdown', () => this.events.off('monster-killed'));
     this.events.on('monster-killed', m => {
       this.kills++;
-      this.xp.addExp(m.exp);
-      this.combat.floatText(m.x, m.y - 30, `+${m.exp} EXP`, '#7ec8ff', 14);
+      const mLevel = (m.cfg && m.cfg.level) ? m.cfg.level : 1;
+      const gapMod = LEVEL.getLevelGapModifier ? LEVEL.getLevelGapModifier(this.xp.level, mLevel) : 1.0;
+      const finalExp = Math.max(1, Math.round(m.exp * gapMod));
+      this.xp.addExp(finalExp);
+
+      const bonusLabel = (gapMod > 1.0) ? ' [도전 보너스!]' : (gapMod < 0.3 ? ' [저레벨 감쇄]' : '');
+      this.combat.floatText(m.x, m.y - 30, `+${finalExp} EXP${bonusLabel}`, '#7ec8ff', 14);
       this.spawnPotions(m.x, m.y);
 
       // 보스 처치 특별 연출
@@ -91,7 +96,7 @@ export default class GameScene extends Phaser.Scene {
       this.time.delayedCall(respawnTime, () => m.respawn());
 
       // [퀘스트 1]: 맵 1(초록 숲/map02)의 몬스터 30마리 처치 카운트
-      if (this.maps.map.id === 'map02' && this.quest.status === 'IN_PROGRESS') {
+      if (this.maps.map.id === 'map02' && (this.quest.status === 'IN_PROGRESS' || this.quest.status === 'Q1_IN_PROGRESS')) {
         this.quest.kills = Math.min(this.quest.targetCount, this.quest.kills + 1);
         if (this.quest.kills >= this.quest.targetCount) {
           this.quest.status = 'READY_TO_COMPLETE';
@@ -101,11 +106,39 @@ export default class GameScene extends Phaser.Scene {
           this.combat.floatText(m.x, m.y - 45, `퀘스트1: 초록 숲 몬스터 처치 (${this.quest.kills}/${this.quest.targetCount})`, '#1dd1a1', 14);
         }
       }
+
+      // [퀘스트 2]: 버섯 50마리 처치 카운트 (버섯 군락지/map03 또는 몬스터 type === 'mushroom')
+      if (this.quest.status === 'Q2_IN_PROGRESS') {
+        const isMushroom = (m.type === 'mushroom' || this.maps.map.id === 'map03');
+        if (isMushroom) {
+          this.quest.kills = Math.min(this.quest.targetCount, this.quest.kills + 1);
+          if (this.quest.kills >= this.quest.targetCount) {
+            this.quest.status = 'Q2_READY';
+            this.combat.floatText(this.player.x, this.player.y - 65, '★ [퀘스트 2 완료 가능] 장로 타키에게 보고하세요! ★', '#ffd32a', 18);
+            this.cameras.main.flash(250, 255, 215, 0);
+          } else {
+            this.combat.floatText(m.x, m.y - 45, `퀘스트2: 버섯 처치 (${this.quest.kills}/${this.quest.targetCount})`, '#e056fd', 15);
+          }
+        }
+      }
     });
 
     this.xp.on('levelup', lv => {
       this.player.applyLevelUp(lv);
-      this.combat.floatText(this.player.x, this.player.y - 50, `LEVEL UP! Lv.${lv}`, '#ffe14d', 22);
+      this.combat.floatText(this.player.x, this.player.y - 50, `★ LEVEL UP! Lv.${lv} ★`, '#ffe14d', 24);
+      this.cameras.main.flash(200, 255, 230, 100);
+      this.soundSpark(this.player.x, this.player.y);
+
+      // 상단 바 및 현재 유저 세션 실시간 갱신
+      if (window.currentUser) {
+        window.currentUser.level = lv;
+        const userNickDisplay = document.getElementById('userNickDisplay');
+        if (userNickDisplay) {
+          const titleStr = window.currentUser.title ? `[${window.currentUser.title}] ` : '';
+          const classStr = this.player.characterClass === 'shadow_lord' ? ' (그림자군주)' : ' (시노비)';
+          userNickDisplay.innerText = `${titleStr}${window.currentUser.nickname}${classStr} Lv.${lv}`;
+        }
+      }
       if (window.saveGameDataToServer) window.saveGameDataToServer(false);
     });
 
@@ -126,6 +159,8 @@ export default class GameScene extends Phaser.Scene {
     // 서버 DB 자동/수동 저장 인터페이스 등록
     window.saveGameDataToServer = async (showNotice = false) => {
       if (!window.currentUser || window.currentUser.username === 'guest') return false;
+      const isChannel2 = (typeof window !== 'undefined' && window.currentChannel === 2);
+      const charClass = isChannel2 ? 'shadow_lord' : (this.player.characterClass || 'shinobi');
       const payload = {
         username: window.currentUser.username,
         level: this.xp.level,
@@ -135,7 +170,8 @@ export default class GameScene extends Phaser.Scene {
         job_tier: this.player.jobTier,
         kills: this.kills,
         quest_status: this.quest.status,
-        quest_kills: this.quest.kills
+        quest_kills: this.quest.kills,
+        character_class: charClass
       };
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       const apiBase = (typeof window.API_URL === 'string') ? window.API_URL : (isLocal ? 'http://127.0.0.1:8000' : '');
@@ -155,7 +191,9 @@ export default class GameScene extends Phaser.Scene {
           }
           const userNickDisplay = document.getElementById('userNickDisplay');
           if (userNickDisplay) {
-            userNickDisplay.innerText = `${window.currentUser.nickname} (Lv.${this.xp.level})`;
+            const titleStr = window.currentUser.title ? `[${window.currentUser.title}] ` : '';
+            const classStr = (charClass === 'shadow_lord') ? ' (그림자군주)' : ' (시노비)';
+            userNickDisplay.innerText = `${titleStr}${window.currentUser.nickname}${classStr} Lv.${this.xp.level}`;
           }
           return true;
         }
@@ -194,9 +232,19 @@ export default class GameScene extends Phaser.Scene {
     if (user.job_tier) this.player.setJobTier(user.job_tier);
     this.player.hp = Phaser.Math.Clamp(user.hp || this.player.maxHp, 1, this.player.maxHp);
     this.player.mp = Phaser.Math.Clamp(user.mp || this.player.maxMp, 0, this.player.maxMp);
-    this.kills = user.kills || 0;
     if (user.quest_status) this.quest.status = user.quest_status;
     if (user.quest_kills !== undefined) this.quest.kills = user.quest_kills;
+    if (this.quest.status && this.quest.status.startsWith('Q2_')) {
+      this.quest.id = 'quest2';
+      this.quest.title = '버섯 50마리 처치';
+      this.quest.targetCount = 50;
+      this.quest.targetMap = 'map03';
+    } else {
+      this.quest.id = 'quest1';
+      this.quest.title = '초록 숲 몬스터 30마리 처치';
+      this.quest.targetCount = 30;
+      this.quest.targetMap = 'map02';
+    }
 
     // 메이플 감성 커스텀 외형 (닉네임, 칭호, 도복 색상, 주무기, 직업) 적용
     if (this.player && this.player.setCustomAppearance) {
@@ -214,12 +262,20 @@ export default class GameScene extends Phaser.Scene {
       const titleStr = user.title ? `[${user.title}] ` : '';
       this.combat.floatText(this.player.x, this.player.y - 65, `★ ${titleStr}${user.nickname} 접속 완료! ★`, '#ffd32a', 20);
     }
+    // 퀘스트 1 오픈 안내
+    if (this.quest.status === 'NOT_STARTED' && this.combat) {
+      this.time.delayedCall(800, () => {
+        if (this.combat && this.player) {
+          this.combat.floatText(this.player.x, this.player.y - 50, '★ [퀘스트 1 오픈!] 마을 좌측의 [장로 타키]에게 대화하세요! ★', '#55efc4', 16);
+        }
+      });
+    }
   }
 
-  // 마을 NPC 및 퀘스트 대화 인터랙션 설정
+  // 마을 NPC 및 퀘스트 대화 인터랙션 설정 (복수 NPC 지원)
   setupNPC(map) {
-    this.npc = null;
-    this.npcPrompt = null;
+    this.npcs = [];
+    this.currentDialogNPC = null;
     this.questDialogUI = null;
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     if (this.input.keyboard) {
@@ -228,117 +284,197 @@ export default class GameScene extends Phaser.Scene {
     }
 
     if (map.npcs && map.npcs.length > 0) {
-      const npcData = map.npcs[0];
       const GY = GAME.groundY;
 
-      // NPC 스프라이트
-      const npcSprite = this.add.sprite(npcData.x, GY - 36, 'npc_elder').setDepth(9);
-      npcSprite.setInteractive({ cursor: 'pointer' });
-      npcSprite.on('pointerdown', () => this.interactWithNPC());
+      map.npcs.forEach(npcData => {
+        const texKey = npcData.texture || (npcData.id === 'researcher' ? 'npc_researcher' : 'npc_elder');
 
-      // NPC 이름표
-      this.add.text(npcData.x, GY - 78, `[장로] ${npcData.name}`, {
-        fontFamily: '"Malgun Gothic", sans-serif', fontSize: '13px',
-        color: '#ffeaa7', stroke: '#000000', strokeThickness: 3
-      }).setOrigin(0.5).setDepth(10);
+        // NPC 스프라이트
+        const npcSprite = this.add.sprite(npcData.x, GY - 36, texKey).setDepth(9);
+        npcSprite.setInteractive({ cursor: 'pointer' });
 
-      // 머리 위 퀘스트 말풍선 아이콘
-      this.questBubble = this.add.sprite(npcData.x, GY - 98, 'quest_icon_start').setDepth(11);
-      this.tweens.add({
-        targets: this.questBubble,
-        y: GY - 105,
-        duration: 600,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
+        // NPC 정보 객체
+        const npcObj = {
+          id: npcData.id,
+          name: npcData.name,
+          title: npcData.title || (npcData.id === 'researcher' ? '버섯 연구원' : '마을 장로'),
+          role: npcData.role || (npcData.id === 'researcher' ? 'quest2' : 'quest1'),
+          texture: texKey,
+          x: npcData.x,
+          sprite: npcSprite,
+          bubble: null,
+          prompt: null
+        };
+
+        npcSprite.on('pointerdown', () => this.interactWithNPC(npcObj));
+
+        // NPC 이름표
+        this.add.text(npcData.x, GY - 78, `[${npcObj.title}] ${npcData.name}`, {
+          fontFamily: '"Malgun Gothic", sans-serif', fontSize: '13px',
+          color: npcObj.id === 'researcher' ? '#55efc4' : '#ffeaa7',
+          stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5).setDepth(10);
+
+        // 머리 위 퀘스트 말풍선 아이콘
+        const bubble = this.add.sprite(npcData.x, GY - 98, 'quest_icon_start').setDepth(11);
+        this.tweens.add({
+          targets: bubble,
+          y: GY - 105,
+          duration: 600,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+        npcObj.bubble = bubble;
+
+        // 대화 상호작용 안내 텍스트
+        const prompt = this.add.text(npcData.x, GY - 128, 'Space: 대화하기', {
+          fontFamily: '"Malgun Gothic", sans-serif', fontSize: '13px',
+          color: '#ffffff', stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5).setDepth(12).setVisible(false);
+        npcObj.prompt = prompt;
+
+        this.npcs.push(npcObj);
       });
 
-      // 대화 상호작용 안내 텍스트
-      this.npcPrompt = this.add.text(npcData.x, GY - 128, 'Space: 대화하기', {
-        fontFamily: '"Malgun Gothic", sans-serif', fontSize: '13px',
-        color: '#ffffff', stroke: '#000000', strokeThickness: 3
-      }).setOrigin(0.5).setDepth(12).setVisible(false);
-
-      this.npc = { x: npcData.x, name: npcData.name, sprite: npcSprite };
       this.updateQuestBubble();
     }
   }
 
   updateQuestBubble() {
-    if (!this.questBubble) return;
-    if (this.quest.status === 'NOT_STARTED') {
-      this.questBubble.setTexture('quest_icon_start').setVisible(true).setTint(0xffffff);
-    } else if (this.quest.status === 'IN_PROGRESS') {
-      this.questBubble.setTexture('quest_icon_ing').setVisible(true).setTint(0xffffff);
-    } else if (this.quest.status === 'READY_TO_COMPLETE') {
-      this.questBubble.setTexture('quest_icon_ready').setVisible(true).setTint(0xffd32a);
-    } else {
-      this.questBubble.setVisible(false); // 완료 후 숨김
-    }
+    if (!this.npcs || this.npcs.length === 0) return;
+    const st = this.quest.status;
+
+    this.npcs.forEach(npc => {
+      if (!npc.bubble) return;
+      if (npc.role === 'quest1') {
+        // [장로 타키]: 퀘스트 1 담당
+        if (st === 'NOT_STARTED') {
+          npc.bubble.setTexture('quest_icon_start').setVisible(true).setTint(0xffffff);
+        } else if (st === 'IN_PROGRESS' || st === 'Q1_IN_PROGRESS') {
+          npc.bubble.setTexture('quest_icon_ing').setVisible(true).setTint(0xffffff);
+        } else if (st === 'READY_TO_COMPLETE') {
+          npc.bubble.setTexture('quest_icon_ready').setVisible(true).setTint(0xffd32a);
+        } else {
+          // 퀘스트 1 완료 후에는 타키 머리 위 아이콘 숨김
+          npc.bubble.setVisible(false);
+        }
+      } else if (npc.role === 'quest2') {
+        // [학자 포포]: 퀘스트 2 담당
+        if (st === 'COMPLETED' || st === 'Q1_COMPLETED' || st === 'Q2_NOT_STARTED') {
+          // 퀘스트 1을 깬 뒤 퀘스트 2 시작 가능 느낌표!
+          npc.bubble.setTexture('quest_icon_start').setVisible(true).setTint(0xffffff);
+        } else if (st === 'Q2_IN_PROGRESS') {
+          npc.bubble.setTexture('quest_icon_ing').setVisible(true).setTint(0xffffff);
+        } else if (st === 'Q2_READY') {
+          npc.bubble.setTexture('quest_icon_ready').setVisible(true).setTint(0xffd32a);
+        } else {
+          // 퀘스트 1 이전이거나 퀘스트 2 완료 후에는 숨김
+          npc.bubble.setVisible(false);
+        }
+      }
+    });
   }
 
-  interactWithNPC() {
+  interactWithNPC(targetNpc = null) {
     if (this.questDialogUI) {
-      // 대화창이 열려있을 때 누르면 확인/수락/완료 진행
       this.advanceQuestDialog();
       return;
     }
-    this.openQuestDialog();
+    const npc = targetNpc || (this.npcs && this.npcs[0]);
+    if (npc) this.openQuestDialog(npc);
   }
 
-  openQuestDialog() {
+  openQuestDialog(npc) {
     if (this.questDialogUI) return;
+    this.currentDialogNPC = npc;
     const s = this;
-    const width = 540, height = 220;
+    const width = 560, height = 230;
     const cx = GAME.width / 2, cy = GAME.height / 2;
 
     const container = s.add.container(0, 0).setScrollFactor(0).setDepth(200);
 
     // 반투명 배경 패널
-    const bg = s.add.rectangle(cx, cy, width, height, 0x111625, 0.92)
-      .setStrokeStyle(3, 0xf1c40f)
+    const bg = s.add.rectangle(cx, cy, width, height, 0x111625, 0.94)
+      .setStrokeStyle(3, npc.id === 'researcher' ? 0x1dd1a1 : 0xf1c40f)
       .setInteractive();
 
     // NPC 일러스트/아이콘 박스
-    const portraitBg = s.add.rectangle(cx - 190, cy, 90, 150, 0x222f3e, 0.8).setStrokeStyle(2, 0x747d8c);
-    const portrait = s.add.sprite(cx - 190, cy + 10, 'npc_elder').setScale(1.3);
-    const nameLabel = s.add.text(cx - 190, cy - 65, '장로 타키', {
-      fontFamily: '"Malgun Gothic", sans-serif', fontSize: '13px', fontStyle: 'bold', color: '#ffd166', stroke: '#000', strokeThickness: 2
+    const portraitBg = s.add.rectangle(cx - 195, cy, 96, 156, 0x222f3e, 0.85).setStrokeStyle(2, 0x747d8c);
+    const portrait = s.add.sprite(cx - 195, cy + 10, npc.texture || 'npc_elder').setScale(1.3);
+    const nameLabel = s.add.text(cx - 195, cy - 65, npc.name, {
+      fontFamily: '"Malgun Gothic", sans-serif', fontSize: '13px', fontStyle: 'bold',
+      color: npc.id === 'researcher' ? '#55efc4' : '#ffd166',
+      stroke: '#000', strokeThickness: 2
     }).setOrigin(0.5);
 
-    // 퀘스트 대화 텍스트
+    // 퀘스트 대화 텍스트 생성
     let titleStr = '';
     let bodyStr = '';
     let btnStr = '';
 
-    if (this.quest.status === 'NOT_STARTED') {
-      titleStr = '📜 [퀘스트 1] 초록 숲 정화 요청';
-      bodyStr = '안녕하신가, 시노비여!\n마을 밖 [초록 숲](맵 1)에 몬스터들이 급증하여\n마을 주민들이 큰 불안에 떨고 있네.\n\n초록 숲으로 가서 몬스터 30마리를 처치해주겠는가?';
-      btnStr = '[Space 또는 클릭]: 퀘스트 수락';
-    } else if (this.quest.status === 'IN_PROGRESS') {
-      titleStr = '📜 [퀘스트 1] 초록 숲 정화 진행 중';
-      bodyStr = `아직 초록 숲에 몬스터들이 남아있네.\n\n현재 처치 상황: (${this.quest.kills} / ${this.quest.targetCount} 마리)\n초록 숲(오른쪽 포탈)으로 가서 30마리를 모두 소탕해주게나!`;
-      btnStr = '[Space 또는 클릭]: 확인';
-    } else if (this.quest.status === 'READY_TO_COMPLETE') {
-      titleStr = '🎉 [퀘스트 1] 초록 숲 정화 완료!';
-      bodyStr = '오오! 초록 숲의 몬스터 30마리를 모두 소탕해주었군!\n자네의 눈부신 활약 덕분에 마을에 평화가 찾아왔네.\n\n★ 보상: 경험치 +350 EXP, 체력/마나 회복';
-      btnStr = '[Space 또는 클릭]: 보상 받기';
+    const st = this.quest.status;
+
+    if (npc.role === 'quest1') {
+      // ==========================================
+      // [NPC 1: 장로 타키] - 퀘스트 1 전담
+      // ==========================================
+      if (st === 'NOT_STARTED') {
+        titleStr = '📜 [퀘스트 1] 초록 숲 정화 요청';
+        bodyStr = '안녕하신가, 모험가여!\n마을 밖 [초록 숲](맵 1)에 몬스터들이 급증하여\n마을 주민들이 큰 불안에 떨고 있네.\n\n초록 숲으로 가서 몬스터 30마리를 처치해주겠는가?';
+        btnStr = '[Space 또는 클릭]: 퀘스트 1 수락';
+      } else if (st === 'IN_PROGRESS' || st === 'Q1_IN_PROGRESS') {
+        titleStr = '📜 [퀘스트 1] 초록 숲 정화 진행 중';
+        bodyStr = `아직 초록 숲에 몬스터들이 남아있네.\n\n현재 처치 상황: (${this.quest.kills} / ${this.quest.targetCount} 마리)\n초록 숲(오른쪽 포탈)으로 가서 30마리를 모두 소탕해주게나!`;
+        btnStr = '[Space 또는 클릭]: 확인';
+      } else if (st === 'READY_TO_COMPLETE') {
+        titleStr = '🎉 [퀘스트 1] 초록 숲 정화 완료!';
+        bodyStr = '오오! 초록 숲의 몬스터 30마리를 모두 소탕해주었군!\n자네의 눈부신 활약 덕분에 마을에 평화가 찾아왔네.\n\n★ 보상: 경험치 +350 EXP, 체력/마나 회복';
+        btnStr = '[Space 또는 클릭]: 보상 받기';
+      } else {
+        titleStr = '📜 [장로 타키] 감사의 인사';
+        bodyStr = '초록 숲을 무사히 지켜주어 고맙네!\n버섯 군락지의 일은 마을 우측에 있는 [학자 포포]에게 가보게나.\n자네의 도움이 절실히 필요한 모양일세!';
+        btnStr = '[Space 또는 클릭]: 닫기';
+      }
     } else {
-      titleStr = '📜 [퀘스트 1] 완료됨';
-      bodyStr = '자네의 헌신적인 활약은 마을의 전설이 될 걸세.\n수련을 계속하여 더욱 강한 시노비가 되어주게나!';
-      btnStr = '[Space 또는 클릭]: 닫기';
+      // ==========================================
+      // [NPC 2: 학자 포포] - 퀘스트 2 전담
+      // ==========================================
+      if (st === 'NOT_STARTED' || st === 'IN_PROGRESS' || st === 'Q1_IN_PROGRESS' || st === 'READY_TO_COMPLETE') {
+        titleStr = '🔬 [학자 포포] 포자 연구 중';
+        bodyStr = '안녕하세요! 저는 버섯 포자를 연구하는 학자 포포예요.\n지금 마을 밖 초록 숲이 소란스러워 위험하답니다.\n먼저 [장로 타키] 님의 초록 숲 정화 의뢰를 완료해 주세요!';
+        btnStr = '[Space 또는 클릭]: 알겠습니다';
+      } else if (st === 'COMPLETED' || st === 'Q1_COMPLETED' || st === 'Q2_NOT_STARTED') {
+        titleStr = '📜 [퀘스트 2] 버섯 군락지 정벌 요청';
+        bodyStr = '초록 숲을 구해주신 영웅님이시군요! 정말 감사해요!\n하지만 그 너머 [버섯 군락지](맵 2)에서 거대한 버섯 몬스터들이\n위험한 유독 포자를 마구 뿜어내고 있어요!\n\n버섯 군락지로 가서 버섯 50마리를 퇴치해주시겠어요?';
+        btnStr = '[Space 또는 클릭]: 퀘스트 2 수락 (버섯 50마리)';
+      } else if (st === 'Q2_IN_PROGRESS') {
+        titleStr = '📜 [퀘스트 2] 버섯 50마리 처치 진행 중';
+        bodyStr = `버섯 군락지(초록 숲 오른쪽 포탈 너머)에서\n버섯 몬스터 50마리를 소탕해 주세요!\n\n현재 버섯 처치: (${this.quest.kills} / 50 마리)`;
+        btnStr = '[Space 또는 클릭]: 확인';
+      } else if (st === 'Q2_READY') {
+        titleStr = '🎉 [퀘스트 2] 버섯 50마리 처치 완료!';
+        bodyStr = '와아! 사나운 버섯 50마리를 전부 소탕해주셨군요!\n덕분에 마음 놓고 포자 표본을 연구할 수 있게 되었어요!\n\n★ 보상: 대량 경험치 +800 EXP, 체력/마나 완충';
+        btnStr = '[Space 또는 클릭]: 보상 받기';
+      } else {
+        titleStr = '🔬 [학자 포포] 연구 성공!';
+        bodyStr = '영웅님 덕분에 마을도 안전해지고 연구도 대성공이에요!\n언제든 마을에 들러 쉬어가세요!';
+        btnStr = '[Space 또는 클릭]: 닫기';
+      }
     }
 
-    const titleText = s.add.text(cx - 120, cy - 80, titleStr, {
-      fontFamily: '"Malgun Gothic", sans-serif', fontSize: '15px', fontStyle: 'bold', color: '#ffd32a', stroke: '#000', strokeThickness: 3
+    const titleText = s.add.text(cx - 125, cy - 85, titleStr, {
+      fontFamily: '"Malgun Gothic", sans-serif', fontSize: '15px', fontStyle: 'bold',
+      color: npc.id === 'researcher' ? '#55efc4' : '#ffd32a', stroke: '#000', strokeThickness: 3
     });
 
-    const bodyText = s.add.text(cx - 120, cy - 50, bodyStr, {
+    const bodyText = s.add.text(cx - 125, cy - 55, bodyStr, {
       fontFamily: '"Malgun Gothic", sans-serif', fontSize: '13px', color: '#ffffff', stroke: '#000', strokeThickness: 2, lineSpacing: 5
     });
 
-    const btnText = s.add.text(cx + 60, cy + 75, btnStr, {
-      fontFamily: '"Malgun Gothic", sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#55efc4', stroke: '#000', strokeThickness: 3
+    const btnText = s.add.text(cx + 60, cy + 78, btnStr, {
+      fontFamily: '"Malgun Gothic", sans-serif', fontSize: '14px', fontStyle: 'bold',
+      color: npc.id === 'researcher' ? '#1dd1a1' : '#f1c40f', stroke: '#000', strokeThickness: 3
     }).setOrigin(0.5);
 
     container.add([bg, portraitBg, portrait, nameLabel, titleText, bodyText, btnText]);
@@ -349,23 +485,54 @@ export default class GameScene extends Phaser.Scene {
 
   advanceQuestDialog() {
     if (!this.questDialogUI) return;
+    const st = this.quest.status;
+    const npc = this.currentDialogNPC;
 
-    if (this.quest.status === 'NOT_STARTED') {
-      this.quest.status = 'IN_PROGRESS';
-      this.quest.kills = 0;
-      this.combat.floatText(this.player.x, this.player.y - 50, '★ 퀘스트 수락: 초록 숲 몬스터 30마리 처치! ★', '#1dd1a1', 16);
-      this.soundSpark(this.player.x, this.player.y);
-      if (window.saveGameDataToServer) window.saveGameDataToServer(false);
-    } else if (this.quest.status === 'READY_TO_COMPLETE') {
-      this.quest.status = 'COMPLETED';
-      // 보상 지급: 350 EXP, 체력/마나 완충
-      this.xp.addExp(350);
-      this.player.healHp(this.player.maxHp);
-      this.player.healMp(this.player.maxMp);
-      this.combat.floatText(this.player.x, this.player.y - 50, '★ 퀘스트 1 완료! (+350 EXP & HP/MP 회복) ★', '#ffd32a', 18);
-      this.cameras.main.flash(300, 255, 215, 0);
-      this.soundSpark(this.player.x, this.player.y);
-      if (window.saveGameDataToServer) window.saveGameDataToServer(false);
+    if (npc && npc.role === 'quest1') {
+      // 장로 타키: 퀘스트 1 처리
+      if (st === 'NOT_STARTED') {
+        this.quest.id = 'quest1';
+        this.quest.title = '초록 숲 몬스터 30마리 처치';
+        this.quest.status = 'IN_PROGRESS';
+        this.quest.targetCount = 30;
+        this.quest.targetMap = 'map02';
+        this.quest.kills = 0;
+        this.combat.floatText(this.player.x, this.player.y - 50, '★ [장로 타키] 퀘스트 1 수락: 초록 숲 30마리 처치! ★', '#1dd1a1', 16);
+        this.soundSpark(this.player.x, this.player.y);
+        if (window.saveGameDataToServer) window.saveGameDataToServer(false);
+      } else if (st === 'READY_TO_COMPLETE') {
+        this.quest.status = 'Q2_NOT_STARTED';
+        this.quest.kills = 0;
+        this.xp.addExp(350);
+        this.player.healHp(this.player.maxHp);
+        this.player.healMp(this.player.maxMp);
+        this.combat.floatText(this.player.x, this.player.y - 50, '★ [퀘스트 1 완료!] +350 EXP ➔ [학자 포포]에게 퀘스트 2를 받으세요! ★', '#ffd32a', 17);
+        this.cameras.main.flash(300, 255, 215, 0);
+        this.soundSpark(this.player.x, this.player.y);
+        if (window.saveGameDataToServer) window.saveGameDataToServer(false);
+      }
+    } else if (npc && npc.role === 'quest2') {
+      // 학자 포포: 퀘스트 2 처리
+      if (st === 'COMPLETED' || st === 'Q1_COMPLETED' || st === 'Q2_NOT_STARTED') {
+        this.quest.id = 'quest2';
+        this.quest.title = '버섯 50마리 처치';
+        this.quest.status = 'Q2_IN_PROGRESS';
+        this.quest.targetCount = 50;
+        this.quest.targetMap = 'map03';
+        this.quest.kills = 0;
+        this.combat.floatText(this.player.x, this.player.y - 50, '★ [학자 포포] 퀘스트 2 수락: 버섯 50마리 처치 시작! ★', '#e056fd', 17);
+        this.soundSpark(this.player.x, this.player.y);
+        if (window.saveGameDataToServer) window.saveGameDataToServer(false);
+      } else if (st === 'Q2_READY') {
+        this.quest.status = 'Q2_COMPLETED';
+        this.xp.addExp(800);
+        this.player.healHp(this.player.maxHp);
+        this.player.healMp(this.player.maxMp);
+        this.combat.floatText(this.player.x, this.player.y - 50, '★ [퀘스트 2 정벌 완료!] +800 EXP & HP/MP 회복 ★', '#ffd32a', 20);
+        this.cameras.main.flash(400, 255, 215, 0);
+        this.soundSpark(this.player.x, this.player.y);
+        if (window.saveGameDataToServer) window.saveGameDataToServer(false);
+      }
     }
 
     this.updateQuestBubble();
@@ -377,6 +544,7 @@ export default class GameScene extends Phaser.Scene {
       this.questDialogUI.destroy();
       this.questDialogUI = null;
     }
+    this.currentDialogNPC = null;
   }
 
   soundSpark(x, y) {
@@ -450,13 +618,27 @@ export default class GameScene extends Phaser.Scene {
     if (this.maps.transitioning) { this.hud.update(p, this.xp, this.kills, this.quest); return; }
     p.update(time);
 
-    // NPC 상호작용 체크 (마을)
-    if (this.npc && this.npcPrompt) {
-      const dist = Math.abs(p.x - this.npc.x);
-      const isNear = dist < 70 && !p.isDead;
-      this.npcPrompt.setVisible(isNear && !this.questDialogUI);
-      if (isNear && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-        this.interactWithNPC();
+    // NPC 상호작용 체크 (마을 복수 NPC 지원)
+    if (this.npcs && this.npcs.length > 0) {
+      let nearestNpc = null;
+      let minDist = 9999;
+
+      this.npcs.forEach(npc => {
+        const dist = Math.abs(p.x - npc.x);
+        if (dist < 75 && dist < minDist) {
+          minDist = dist;
+          nearestNpc = npc;
+        }
+        if (npc.prompt) npc.prompt.setVisible(false);
+      });
+
+      if (nearestNpc && !p.isDead) {
+        if (nearestNpc.prompt) nearestNpc.prompt.setVisible(!this.questDialogUI);
+        if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+          this.interactWithNPC(nearestNpc);
+        }
+      } else if (this.questDialogUI && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+        this.advanceQuestDialog();
       }
     } else if (this.questDialogUI && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
       this.advanceQuestDialog();

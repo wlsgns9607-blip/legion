@@ -96,6 +96,7 @@ class SaveDataRequest(BaseModel):
     kills: int
     quest_status: str
     quest_kills: int
+    character_class: str | None = None
 
 class UpdateCharacterRequest(BaseModel):
     username: str
@@ -175,11 +176,18 @@ def save_data(req: SaveDataRequest):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        UPDATE users
-        SET level = ?, exp = ?, hp = ?, mp = ?, job_tier = ?, kills = ?, quest_status = ?, quest_kills = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE username = ?
-    """, (req.level, req.exp, req.hp, req.mp, req.job_tier, req.kills, req.quest_status, req.quest_kills, req.username))
+    if req.character_class:
+        cursor.execute("""
+            UPDATE users
+            SET level = ?, exp = ?, hp = ?, mp = ?, job_tier = ?, kills = ?, quest_status = ?, quest_kills = ?, character_class = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE username = ?
+        """, (req.level, req.exp, req.hp, req.mp, req.job_tier, req.kills, req.quest_status, req.quest_kills, req.character_class, req.username))
+    else:
+        cursor.execute("""
+            UPDATE users
+            SET level = ?, exp = ?, hp = ?, mp = ?, job_tier = ?, kills = ?, quest_status = ?, quest_kills = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE username = ?
+        """, (req.level, req.exp, req.hp, req.mp, req.job_tier, req.kills, req.quest_status, req.quest_kills, req.username))
     conn.commit()
     conn.close()
 

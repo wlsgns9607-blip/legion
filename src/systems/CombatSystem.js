@@ -421,6 +421,16 @@ export default class CombatSystem {
 
     // 무기 및 분신 시각 효과 연출 매핑
     const weaponTexMap = {
+      SKILL_01: 'shadow_blade',
+      SKILL_02: 'shadow_blade',
+      SKILL_03: 'shadow_blade',
+      SKILL_04: 'shadow_dagger',
+      SKILL_05: 'shadow_kusarigama',
+      SKILL_06: 'shadow_greatsword',
+      SKILL_07: 'shadow_lance',
+      SKILL_08: 'shadow_glaive',
+      SKILL_09: 'shadow_axe',
+      SKILL_10: 'shadow_blade',
       SKL_SHD_01: 'shadow_blade',
       SKL_SHD_02: 'shadow_blade',
       SKL_SHD_11: 'shadow_dagger',
@@ -428,7 +438,8 @@ export default class CombatSystem {
       SKL_SHD_21: 'shadow_greatsword',
       SKL_SHD_22: 'shadow_lance',
       SKL_SHD_31: 'shadow_glaive',
-      SKL_SHD_32: 'shadow_axe'
+      SKL_SHD_32: 'shadow_axe',
+      SKL_SHD_ULT: 'shadow_blade'
     };
     const weaponTex = weaponTexMap[skillId] || 'shadow_blade';
 
